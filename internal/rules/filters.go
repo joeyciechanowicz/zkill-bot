@@ -26,8 +26,9 @@ type FilterNode struct {
 	Awox             *bool `yaml:"awox"`
 
 	// Location
-	SolarSystemID []int64 `yaml:"solar_system_id"`
-	ZKBLabel      []string `yaml:"zkb_label"`
+	SolarSystemID   []int64  `yaml:"solar_system_id"`
+	SolarSystemName []string `yaml:"solar_system_name"`
+	ZKBLabel        []string `yaml:"zkb_label"`
 
 	// Time
 	DayOfWeek  []string    `yaml:"day_of_week"`
@@ -114,6 +115,16 @@ func matchFilter(km *killmail.Killmail, f *FilterNode) bool {
 
 	if len(f.SolarSystemID) > 0 && !containsInt64(f.SolarSystemID, km.SolarSystemID) {
 		return false
+	}
+
+	if len(f.SolarSystemName) > 0 {
+		name := ""
+		if km.Enriched != nil {
+			name = km.Enriched.SolarSystemName
+		}
+		if !containsString(f.SolarSystemName, name) {
+			return false
+		}
 	}
 
 	if len(f.ZKBLabel) > 0 && !anyLabelMatch(f.ZKBLabel, km.ZKB.Labels) {

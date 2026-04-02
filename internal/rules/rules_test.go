@@ -326,6 +326,31 @@ func TestFilter_DayOfWeek(t *testing.T) {
 	}
 }
 
+func TestFilter_SolarSystemName(t *testing.T) {
+	km := buildKM()
+	km.Enriched = &killmail.EnrichedData{SolarSystemName: "Jita"}
+
+	rf := &rules.RuleFile{
+		Mode: rules.ModeFirstMatch,
+		Rules: []rules.Rule{
+			{Name: "jita", Enabled: true, Priority: 1,
+				Filter:  rules.FilterNode{SolarSystemName: []string{"Jita"}},
+				Actions: []rules.ActionConfig{{Type: "console"}}},
+		},
+	}
+
+	matches := rules.Evaluate(km, rf)
+	if len(matches) != 1 {
+		t.Errorf("solar_system_name: expected match for Jita, got %d", len(matches))
+	}
+
+	rf.Rules[0].Filter.SolarSystemName = []string{"Amarr"}
+	matches = rules.Evaluate(km, rf)
+	if len(matches) != 0 {
+		t.Errorf("solar_system_name: expected no match for wrong system, got %d", len(matches))
+	}
+}
+
 func TestLoad_ValidFile(t *testing.T) {
 	// Write a temp rules file and verify Load works.
 	content := `
