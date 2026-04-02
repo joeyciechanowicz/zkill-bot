@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"flag"
 	"log/slog"
 	"net/http"
 	"os"
@@ -20,12 +21,15 @@ import (
 )
 
 func main() {
+	configPath := flag.String("config", "./config.yaml", "path to config file")
+	flag.Parse()
+
 	// Signal-aware context for graceful shutdown.
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
 
-	// --- Configuration ---
-	cfg, err := config.Load()
+	// --- Configuration (includes rules) ---
+	cfg, err := config.Load(*configPath)
 	if err != nil {
 		slog.Error("startup: config failed", "error", err)
 		os.Exit(1)
@@ -35,13 +39,7 @@ func main() {
 		slog.SetDefault(slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelDebug})))
 	}
 
-	// --- Rules ---
-	rf, err := rules.Load(cfg.RulesFilePath)
-	if err != nil {
-		slog.Error("startup: rules failed", "error", err)
-		os.Exit(1)
-	}
-	slog.Info("rules loaded", "count", len(rf.Rules), "mode", rf.Mode)
+	slog.Info("rules loaded", "count", len(cfg.Rules.Rules), "mode", cfg.Rules.Mode)
 
 	// --- Enrichment ---
 	enricher, err := enrichment.New(cfg.EVEDBPath)
@@ -63,21 +61,21 @@ func main() {
 
 	// --- Metrics ---
 	m := &metrics.Metrics{}
-	m.RunLogger(ctx, cfg.MetricsLogInterval, cfg.Debug)
+	m.RunLogger(ctx, cfg.MetricsLogInterval(), cfg.Debug)
 
 	// --- Notifier ---
-	notifier := metrics.NewNotifier(cfg.ObsAlertWebhookURL, httpClient)
+	notifier := metrics.NewNotifier(cfg.AlertWebhookURL, httpClient)
 
 	// --- Action dispatcher ---
 	dispatcher := actions.NewDispatcher(
 		httpClient,
 		cfg.RetryMaxRetries,
-		cfg.RetryBaseBackoff,
-		cfg.RetryMaxBackoff,
+		cfg.RetryBaseBackoff(),
+		cfg.RetryMaxBackoff(),
 	)
 
 	// --- Determine start sequence ---
-	p := poller.New(cfg.R2Z2BaseURL, cfg.R2Z2SequencePath, cfg.PollInterval, cfg.Poll404Backoff)
+	p := poller.New(cfg.R2Z2BaseURL, cfg.R2Z2SequencePath, cfg.PollInterval(), cfg.Poll404Backoff())
 
 	startSeq := st.LastSequence
 	if startSeq > 0 {
@@ -105,7 +103,7 @@ func main() {
 			if !ok {
 				goto shutdown
 			}
-			processKillmail(ctx, raw, enricher, rf, dispatcher, st, m, cfg)
+			processKillmail(ctx, raw, enricher, &cfg.Rules, dispatcher, st, m, cfg)
 
 		case <-ctx.Done():
 			goto shutdown
@@ -118,8 +116,6 @@ shutdown:
 		slog.Error("shutdown: save state failed", "error", err)
 	}
 
-	// Use a short background context for the shutdown notification since the
-	// main context is already cancelled.
 	shutCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 	notifier.NotifyShutdown(shutCtx, st.LastSequence)
@@ -136,7 +132,6 @@ func processKillmail(
 	m *metrics.Metrics,
 	cfg *config.Config,
 ) {
-	// Normalize
 	km, err := killmail.NormalizeFromR2Z2(raw)
 	if err != nil {
 		slog.Warn("pipeline: rejected malformed killmail", "error", err)
@@ -144,32 +139,24 @@ func processKillmail(
 		return
 	}
 
-	// Enrich
 	enricher.Enrich(km)
 
-	// Evaluate rules
 	matches := rules.Evaluate(km, rf)
 	m.RuleMatches.Add(int64(len(matches)))
 
-	// Execute actions
 	if len(matches) > 0 {
 		dispatcher.Run(ctx, km, matches)
-		// Sync dispatcher counters into metrics
 		m.ActionSuccess.Store(dispatcher.Counters.Success)
 		m.ActionFailure.Store(dispatcher.Counters.Failure)
 		m.ActionRetry.Store(dispatcher.Counters.Retry)
 	}
 
-	// Checkpoint: advance after successful processing
 	st.LastSequence = km.SequenceID
-
-	// Metrics
 	m.KillmailsProcessed.Add(1)
 	m.LastSequenceID.Store(km.SequenceID)
 	m.LastProcessedAt.Store(time.Now().Unix())
 	m.RecordLag(km.UploadedAt)
 
-	// Persist after every killmail. Cheap because it's a small JSON file.
 	if err := st.Save(); err != nil {
 		slog.Error("pipeline: save state", "error", err)
 	}

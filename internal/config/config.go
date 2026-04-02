@@ -5,139 +5,128 @@ import (
 	"fmt"
 	"net/url"
 	"os"
-	"strconv"
 	"strings"
 	"time"
 
-	"github.com/joho/godotenv"
+	"gopkg.in/yaml.v3"
+
+	"zkill-bot/internal/rules"
 )
 
-// Config holds all runtime configuration loaded from the environment.
+// Config holds all runtime configuration loaded from a YAML file.
 type Config struct {
-	// Rules
-	RulesFilePath string
-
 	// EVE SDE enrichment
-	EVEDBPath string
+	EVEDBPath string `yaml:"eve_db_path"`
 
 	// State persistence
-	StateFilePath string
+	StateFilePath string `yaml:"state_file_path"`
 
 	// R2Z2 API
-	R2Z2BaseURL      string
-	R2Z2SequencePath string
+	R2Z2BaseURL      string `yaml:"r2z2_base_url"`
+	R2Z2SequencePath string `yaml:"r2z2_sequence_path"`
 
-	// Polling behaviour
-	PollInterval   time.Duration
-	Poll404Backoff time.Duration
+	// Polling behaviour (milliseconds in YAML, time.Duration in Go)
+	PollIntervalMS   int `yaml:"poll_interval_ms"`
+	Poll404BackoffMS int `yaml:"poll_404_backoff_ms"`
 
 	// Retry behaviour for actions
-	RetryMaxRetries   int
-	RetryBaseBackoff  time.Duration
-	RetryMaxBackoff   time.Duration
+	RetryMaxRetries   int `yaml:"retry_max_retries"`
+	RetryBaseBackoffMS int `yaml:"retry_base_backoff_ms"`
+	RetryMaxBackoffMS  int `yaml:"retry_max_backoff_ms"`
 
 	// Observability
-	Debug                   bool
-	MetricsLogInterval      time.Duration
-	ObsAlertWebhookURL      string
-	ObsRepeated403Threshold int
-	ObsRepeated429Threshold int
-	ObsStalledSequenceMS    time.Duration
+	Debug                   bool   `yaml:"debug"`
+	MetricsLogIntervalMS    int    `yaml:"metrics_log_interval_ms"`
+	AlertWebhookURL         string `yaml:"alert_webhook_url"`
+	ObsRepeated403Threshold int    `yaml:"obs_repeated_403_threshold"`
+	ObsRepeated429Threshold int    `yaml:"obs_repeated_429_threshold"`
+
+	// Rules — parsed inline from the same config file.
+	Rules rules.RuleFile `yaml:"rules"`
 }
 
-// Load reads .env (if present) and then os.Getenv, validates all values, and
-// returns a fully-populated Config or an error with actionable detail.
-func Load() (*Config, error) {
-	// Load .env file if it exists; ignore "file not found" errors.
-	if err := godotenv.Load(); err != nil && !os.IsNotExist(err) {
-		return nil, fmt.Errorf("config: loading .env: %w", err)
+// Derived duration accessors so callers don't multiply everywhere.
+func (c *Config) PollInterval() time.Duration   { return ms(c.PollIntervalMS, 100) }
+func (c *Config) Poll404Backoff() time.Duration  { return ms(c.Poll404BackoffMS, 6000) }
+func (c *Config) RetryBaseBackoff() time.Duration { return ms(c.RetryBaseBackoffMS, 250) }
+func (c *Config) RetryMaxBackoff() time.Duration  { return ms(c.RetryMaxBackoffMS, 10000) }
+func (c *Config) MetricsLogInterval() time.Duration { return ms(c.MetricsLogIntervalMS, 60000) }
+
+func ms(v, def int) time.Duration {
+	if v <= 0 {
+		return time.Duration(def) * time.Millisecond
+	}
+	return time.Duration(v) * time.Millisecond
+}
+
+// Load reads the YAML config file at path, applies defaults, and validates.
+func Load(path string) (*Config, error) {
+	data, err := os.ReadFile(path)
+	if err != nil {
+		return nil, fmt.Errorf("config: read %q: %w", path, err)
 	}
 
+	var c Config
+	if err := yaml.Unmarshal(data, &c); err != nil {
+		return nil, fmt.Errorf("config: parse %q: %w", path, err)
+	}
+
+	applyDefaults(&c)
+
+	if errs := validate(&c); len(errs) > 0 {
+		return nil, errors.New("config: validation failed:\n  - " + strings.Join(errs, "\n  - "))
+	}
+
+	return &c, nil
+}
+
+func applyDefaults(c *Config) {
+	if c.EVEDBPath == "" {
+		c.EVEDBPath = "./eve.db"
+	}
+	if c.StateFilePath == "" {
+		c.StateFilePath = "./state.json"
+	}
+	if c.R2Z2BaseURL == "" {
+		c.R2Z2BaseURL = "https://r2z2.zkillboard.com"
+	}
+	if c.R2Z2SequencePath == "" {
+		c.R2Z2SequencePath = "/ephemeral/sequence.json"
+	}
+	if c.RetryMaxRetries == 0 {
+		c.RetryMaxRetries = 3
+	}
+	if c.ObsRepeated403Threshold == 0 {
+		c.ObsRepeated403Threshold = 3
+	}
+	if c.ObsRepeated429Threshold == 0 {
+		c.ObsRepeated429Threshold = 5
+	}
+	if c.Rules.Mode == "" {
+		c.Rules.Mode = rules.ModeFirstMatch
+	}
+}
+
+func validate(c *Config) []string {
 	var errs []string
-	add := func(msg string) { errs = append(errs, "  - "+msg) }
 
-	c := &Config{}
-
-	// --- Rules ---
-	c.RulesFilePath = envStr("RULES_FILE_PATH", "./config/rules.yaml")
-
-	// --- EVE DB ---
-	c.EVEDBPath = envStr("EVE_DB_PATH", "./eve.db")
 	if _, err := os.Stat(c.EVEDBPath); err != nil {
-		add(fmt.Sprintf("EVE_DB_PATH=%q: file not found", c.EVEDBPath))
+		errs = append(errs, fmt.Sprintf("eve_db_path=%q: file not found", c.EVEDBPath))
 	}
-
-	// --- State file ---
-	c.StateFilePath = envStr("STATE_FILE_PATH", "./state.json")
-
-	// --- R2Z2 ---
-	c.R2Z2BaseURL = envStr("R2Z2_BASE_URL", "https://r2z2.zkillboard.com")
 	if _, err := url.ParseRequestURI(c.R2Z2BaseURL); err != nil {
-		add(fmt.Sprintf("R2Z2_BASE_URL=%q: invalid URL: %v", c.R2Z2BaseURL, err))
+		errs = append(errs, fmt.Sprintf("r2z2_base_url=%q: invalid URL", c.R2Z2BaseURL))
 	}
-	c.R2Z2SequencePath = envStr("R2Z2_SEQUENCE_PATH", "/ephemeral/sequence.json")
-
-	// --- Polling ---
-	c.PollInterval = envDuration("POLL_INTERVAL_MS", 100*time.Millisecond, add)
-	c.Poll404Backoff = envDuration("POLL_404_BACKOFF_MS", 6*time.Second, add)
-
-	// --- Retries ---
-	c.RetryMaxRetries = envInt("RETRY_MAX_RETRIES", 3, add)
-	c.RetryBaseBackoff = envDuration("RETRY_BASE_BACKOFF_MS", 250*time.Millisecond, add)
-	c.RetryMaxBackoff = envDuration("RETRY_MAX_BACKOFF_MS", 10*time.Second, add)
-
-	// --- Observability ---
-	c.Debug = strings.ToLower(envStr("DEBUG", "false")) == "true"
-	c.MetricsLogInterval = envDuration("OBS_METRICS_LOG_INTERVAL_MS", 60*time.Second, add)
-	c.ObsAlertWebhookURL = envStr("OBS_ALERT_WEBHOOK_URL", "")
-	if c.ObsAlertWebhookURL != "" {
-		if _, err := url.ParseRequestURI(c.ObsAlertWebhookURL); err != nil {
-			add(fmt.Sprintf("OBS_ALERT_WEBHOOK_URL=%q: invalid URL: %v", c.ObsAlertWebhookURL, err))
+	if c.AlertWebhookURL != "" {
+		if _, err := url.ParseRequestURI(c.AlertWebhookURL); err != nil {
+			errs = append(errs, fmt.Sprintf("alert_webhook_url=%q: invalid URL", c.AlertWebhookURL))
 		}
 	}
-	c.ObsRepeated403Threshold = envInt("OBS_REPEATED_403_THRESHOLD", 3, add)
-	c.ObsRepeated429Threshold = envInt("OBS_REPEATED_429_THRESHOLD", 5, add)
-	c.ObsStalledSequenceMS = envDuration("OBS_STALLED_SEQUENCE_MS", 15*time.Minute, add)
-
-	if len(errs) > 0 {
-		return nil, errors.New("config: validation failed:\n" + strings.Join(errs, "\n"))
+	if c.Rules.Mode != rules.ModeFirstMatch && c.Rules.Mode != rules.ModeMultiMatch {
+		errs = append(errs, fmt.Sprintf("rules.mode=%q: must be %q or %q", c.Rules.Mode, rules.ModeFirstMatch, rules.ModeMultiMatch))
+	}
+	if len(c.Rules.Rules) == 0 {
+		errs = append(errs, "rules.rules: no rules defined")
 	}
 
-	return c, nil
-}
-
-// --- helpers ---
-
-func envStr(key, def string) string {
-	if v := os.Getenv(key); v != "" {
-		return v
-	}
-	return def
-}
-
-func envInt(key string, def int, add func(string)) int {
-	v := os.Getenv(key)
-	if v == "" {
-		return def
-	}
-	n, err := strconv.Atoi(v)
-	if err != nil {
-		add(fmt.Sprintf("%s=%q: must be an integer", key, v))
-		return def
-	}
-	return n
-}
-
-// envDuration reads a millisecond integer env var and returns a time.Duration.
-func envDuration(key string, def time.Duration, add func(string)) time.Duration {
-	v := os.Getenv(key)
-	if v == "" {
-		return def
-	}
-	n, err := strconv.ParseInt(v, 10, 64)
-	if err != nil || n < 0 {
-		add(fmt.Sprintf("%s=%q: must be a non-negative integer (milliseconds)", key, v))
-		return def
-	}
-	return time.Duration(n) * time.Millisecond
+	return errs
 }

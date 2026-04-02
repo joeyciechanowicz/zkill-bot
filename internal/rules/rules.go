@@ -1,11 +1,7 @@
 package rules
 
 import (
-	"fmt"
-	"os"
 	"sort"
-
-	"gopkg.in/yaml.v3"
 
 	"zkill-bot/internal/killmail"
 )
@@ -26,14 +22,15 @@ type ActionConfig struct {
 
 // Rule is a single configured rule with its filter tree and actions.
 type Rule struct {
-	Name     string       `yaml:"name"`
-	Enabled  bool         `yaml:"enabled"`
-	Priority int          `yaml:"priority"`
-	Filter   FilterNode   `yaml:"filter"`
+	Name     string         `yaml:"name"`
+	Enabled  bool           `yaml:"enabled"`
+	Priority int            `yaml:"priority"`
+	Filter   FilterNode     `yaml:"filter"`
 	Actions  []ActionConfig `yaml:"actions"`
 }
 
-// RuleFile is the top-level YAML document.
+// RuleFile holds the evaluation mode and the list of rules.
+// It is unmarshalled directly by the config package as part of config.yaml.
 type RuleFile struct {
 	Mode  Mode   `yaml:"mode"`
 	Rules []Rule `yaml:"rules"`
@@ -45,41 +42,20 @@ type RuleMatch struct {
 	Actions []ActionConfig
 }
 
-// Load parses the YAML rules file at path and returns a validated RuleFile.
-func Load(path string) (*RuleFile, error) {
-	data, err := os.ReadFile(path)
-	if err != nil {
-		return nil, fmt.Errorf("rules: read %q: %w", path, err)
-	}
-
-	var rf RuleFile
-	if err := yaml.Unmarshal(data, &rf); err != nil {
-		return nil, fmt.Errorf("rules: parse %q: %w", path, err)
-	}
-
-	// Default mode
-	if rf.Mode == "" {
-		rf.Mode = ModeFirstMatch
-	}
-	if rf.Mode != ModeFirstMatch && rf.Mode != ModeMultiMatch {
-		return nil, fmt.Errorf("rules: invalid mode %q (want %q or %q)", rf.Mode, ModeFirstMatch, ModeMultiMatch)
-	}
-
-	// Sort enabled rules by priority (lower number = higher priority).
-	sort.SliceStable(rf.Rules, func(i, j int) bool {
-		return rf.Rules[i].Priority < rf.Rules[j].Priority
-	})
-
-	return &rf, nil
-}
-
 // Evaluate tests km against all enabled rules in priority order.
 // In first-match mode it returns as soon as one rule matches.
 // In multi-match mode it returns all matching rules.
 func Evaluate(km *killmail.Killmail, rf *RuleFile) []RuleMatch {
+	// Sort by priority each time so callers don't need to pre-sort.
+	sorted := make([]Rule, len(rf.Rules))
+	copy(sorted, rf.Rules)
+	sort.SliceStable(sorted, func(i, j int) bool {
+		return sorted[i].Priority < sorted[j].Priority
+	})
+
 	var matches []RuleMatch
-	for i := range rf.Rules {
-		r := &rf.Rules[i]
+	for i := range sorted {
+		r := &sorted[i]
 		if !r.Enabled {
 			continue
 		}

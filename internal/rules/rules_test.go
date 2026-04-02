@@ -1,7 +1,6 @@
 package rules_test
 
 import (
-	"os"
 	"testing"
 	"time"
 
@@ -351,35 +350,28 @@ func TestFilter_SolarSystemName(t *testing.T) {
 	}
 }
 
-func TestLoad_ValidFile(t *testing.T) {
-	// Write a temp rules file and verify Load works.
-	content := `
-mode: multi-match
-rules:
-  - name: test-rule
-    enabled: true
-    priority: 1
-    filter:
-      solo: true
-    actions:
-      - type: console
-`
-	f, err := os.CreateTemp("", "rules-*.yaml")
-	if err != nil {
-		t.Fatal(err)
-	}
-	defer os.Remove(f.Name())
-	f.WriteString(content)
-	f.Close()
+func TestEvaluate_PriorityOrder(t *testing.T) {
+	km := buildKM()
+	km.ZKB.Solo = true
 
-	rf, err := rules.Load(f.Name())
-	if err != nil {
-		t.Fatalf("Load: %v", err)
+	// Define rules in reverse priority order to verify sorting.
+	rf := &rules.RuleFile{
+		Mode: rules.ModeFirstMatch,
+		Rules: []rules.Rule{
+			{Name: "low-priority", Enabled: true, Priority: 99,
+				Filter:  rules.FilterNode{Solo: boolPtr(true)},
+				Actions: []rules.ActionConfig{{Type: "console"}}},
+			{Name: "high-priority", Enabled: true, Priority: 1,
+				Filter:  rules.FilterNode{Solo: boolPtr(true)},
+				Actions: []rules.ActionConfig{{Type: "console"}}},
+		},
 	}
-	if rf.Mode != rules.ModeMultiMatch {
-		t.Errorf("Mode: got %q, want multi-match", rf.Mode)
+
+	matches := rules.Evaluate(km, rf)
+	if len(matches) != 1 {
+		t.Fatalf("expected 1 match, got %d", len(matches))
 	}
-	if len(rf.Rules) != 1 || rf.Rules[0].Name != "test-rule" {
-		t.Error("Rules not loaded correctly")
+	if matches[0].Rule.Name != "high-priority" {
+		t.Errorf("expected high-priority rule to win, got %q", matches[0].Rule.Name)
 	}
 }
