@@ -52,6 +52,21 @@ rules:
           url: "https://discord.com/api/webhooks/1483747598366933086/pWrFA3uCmPOEJjenNoZdI3k3ZC5Rq7N7STdRnNjBbh0ScPkY-9SHEeB_btPCa8uaXoy-"
           template: "loss"
 
+  - name: "jita-trade-hub-kill"
+    enabled: true
+    priority: 50
+    filter:
+      and:
+        - solar_system_name: ["Jita", "Amarr", "Dodixie", "Rens", "Hek"]
+        - zkb_value_min: 500000000
+        - npc: false
+    actions:
+      - type: console
+      - type: webhook
+        args:
+          url: "https://discord.com/api/webhooks/1483747598366933086/pWrFA3uCmPOEJjenNoZdI3k3ZC5Rq7N7STdRnNjBbh0ScPkY-9SHEeB_btPCa8uaXoy-"
+          template: "default"
+
   - name: "all-kills"
     enabled: false
     priority: 100
