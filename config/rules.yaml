@@ -9,10 +9,10 @@ rules:
     actions:
       - type: console
       # Uncomment and set url to send Discord notifications:
-      # - type: webhook
-      #   args:
-      #     url: "https://discord.com/api/webhooks/..."
-      #     template: "default"
+      - type: webhook
+        args:
+          url: "https://discord.com/api/webhooks/1483747598366933086/pWrFA3uCmPOEJjenNoZdI3k3ZC5Rq7N7STdRnNjBbh0ScPkY-9SHEeB_btPCa8uaXoy-"
+          template: "default"
 
   - name: "capital-kill"
     enabled: true
@@ -21,10 +21,10 @@ rules:
       has_capital: true
     actions:
       - type: console
-      # - type: webhook
-      #   args:
-      #     url: "https://discord.com/api/webhooks/..."
-      #     template: "capital"
+      - type: webhook
+        args:
+          url: "https://discord.com/api/webhooks/1483747598366933086/pWrFA3uCmPOEJjenNoZdI3k3ZC5Rq7N7STdRnNjBbh0ScPkY-9SHEeB_btPCa8uaXoy-"
+          template: "capital"
 
   - name: "corp-loss"
     enabled: true
@@ -33,10 +33,10 @@ rules:
       victim_corporation_id: [98812444]
     actions:
       - type: console
-      # - type: webhook
-      #   args:
-      #     url: "https://discord.com/api/webhooks/..."
-      #     template: "loss"
+      - type: webhook
+        args:
+          url: "https://discord.com/api/webhooks/1483747598366933086/pWrFA3uCmPOEJjenNoZdI3k3ZC5Rq7N7STdRnNjBbh0ScPkY-9SHEeB_btPCa8uaXoy-"
+          template: "loss"
 
   - name: "solo-pvp"
     enabled: true
@@ -47,6 +47,10 @@ rules:
         - npc: false
     actions:
       - type: console
+      - type: webhook
+        args:
+          url: "https://discord.com/api/webhooks/1483747598366933086/pWrFA3uCmPOEJjenNoZdI3k3ZC5Rq7N7STdRnNjBbh0ScPkY-9SHEeB_btPCa8uaXoy-"
+          template: "loss"
 
   - name: "all-kills"
     enabled: false
