@@ -8,9 +8,11 @@ rules:
       zkb_value_min: 1000000000
     actions:
       - type: console
-      - type: webhook
-        args:
-          template: "default"
+      # Uncomment and set url to send Discord notifications:
+      # - type: webhook
+      #   args:
+      #     url: "https://discord.com/api/webhooks/..."
+      #     template: "default"
 
   - name: "capital-kill"
     enabled: true
@@ -19,9 +21,10 @@ rules:
       has_capital: true
     actions:
       - type: console
-      - type: webhook
-        args:
-          template: "capital"
+      # - type: webhook
+      #   args:
+      #     url: "https://discord.com/api/webhooks/..."
+      #     template: "capital"
 
   - name: "corp-loss"
     enabled: true
@@ -30,9 +33,10 @@ rules:
       victim_corporation_id: [98812444]
     actions:
       - type: console
-      - type: webhook
-        args:
-          template: "loss"
+      # - type: webhook
+      #   args:
+      #     url: "https://discord.com/api/webhooks/..."
+      #     template: "loss"
 
   - name: "solo-pvp"
     enabled: true
