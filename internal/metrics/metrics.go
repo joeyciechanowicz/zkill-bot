@@ -25,10 +25,9 @@ type Metrics struct {
 
 	RuleMatches atomic.Int64
 
-	ActionSuccess  atomic.Int64
-	ActionFailure  atomic.Int64
-	ActionRetry    atomic.Int64
-	ActionSkipDupe atomic.Int64
+	ActionSuccess atomic.Int64
+	ActionFailure atomic.Int64
+	ActionRetry   atomic.Int64
 
 	LastProcessedAt atomic.Int64 // unix timestamp
 	LastSequenceID  atomic.Int64
@@ -55,7 +54,6 @@ func (m *Metrics) Log() {
 		"action_success", m.ActionSuccess.Load(),
 		"action_failure", m.ActionFailure.Load(),
 		"action_retry", m.ActionRetry.Load(),
-		"action_skip_dupe", m.ActionSkipDupe.Load(),
 		"last_sequence_id", m.LastSequenceID.Load(),
 		"last_lag_seconds", m.LastLagSeconds.Load(),
 	)

@@ -10,7 +10,6 @@ import (
 
 	"zkill-bot/internal/killmail"
 	"zkill-bot/internal/rules"
-	"zkill-bot/internal/state"
 )
 
 // Handler is the interface implemented by each action type.
@@ -23,12 +22,10 @@ type Counters struct {
 	Success int64
 	Failure int64
 	Retry   int64
-	SkipDupe int64
 }
 
-// Dispatcher executes actions for matched rules, enforcing idempotency and retries.
+// Dispatcher executes actions for matched rules with retry logic.
 type Dispatcher struct {
-	state       *state.State
 	handlers    map[string]Handler
 	maxRetries  int
 	baseBackoff time.Duration
@@ -36,14 +33,12 @@ type Dispatcher struct {
 	Counters    Counters
 }
 
-// NewDispatcher constructs a Dispatcher wired to the given state and http client.
-func NewDispatcher(s *state.State, client *http.Client, maxRetries int, baseBackoff, maxBackoff time.Duration) *Dispatcher {
-	webhookAction := NewWebhookAction(client)
+// NewDispatcher constructs a Dispatcher wired to the given http client.
+func NewDispatcher(client *http.Client, maxRetries int, baseBackoff, maxBackoff time.Duration) *Dispatcher {
 	return &Dispatcher{
-		state: s,
 		handlers: map[string]Handler{
 			"console": ConsoleAction{},
-			"webhook": webhookAction,
+			"webhook": NewWebhookAction(client),
 		},
 		maxRetries:  maxRetries,
 		baseBackoff: baseBackoff,
@@ -52,35 +47,24 @@ func NewDispatcher(s *state.State, client *http.Client, maxRetries int, baseBack
 }
 
 // Run executes all actions for the given rule matches against km.
-// Idempotency is checked and recorded per fingerprint.
 func (d *Dispatcher) Run(ctx context.Context, km *killmail.Killmail, matches []rules.RuleMatch) {
 	for _, m := range matches {
 		for _, ac := range m.Actions {
-			fp := state.Fingerprint(km.KillmailID, m.Rule.Name, ac.Type)
-
-			if d.state.HasExecuted(fp) {
-				slog.Debug("action: skipping duplicate", "fingerprint", fp)
-				d.Counters.SkipDupe++
-				continue
-			}
-
-			err := d.executeWithRetry(ctx, km, ac, fp)
-			if err != nil {
+			if err := d.executeWithRetry(ctx, km, ac); err != nil {
 				slog.Error("action: failed after retries",
-					"fingerprint", fp,
+					"rule", m.Rule.Name,
+					"action", ac.Type,
 					"error", err,
 				)
 				d.Counters.Failure++
 				continue
 			}
-
-			d.state.RecordExecution(fp)
 			d.Counters.Success++
 		}
 	}
 }
 
-func (d *Dispatcher) executeWithRetry(ctx context.Context, km *killmail.Killmail, ac rules.ActionConfig, fp string) error {
+func (d *Dispatcher) executeWithRetry(ctx context.Context, km *killmail.Killmail, ac rules.ActionConfig) error {
 	handler, ok := d.handlers[ac.Type]
 	if !ok {
 		return fmt.Errorf("unknown action type %q", ac.Type)
@@ -90,7 +74,7 @@ func (d *Dispatcher) executeWithRetry(ctx context.Context, km *killmail.Killmail
 	for attempt := 0; attempt <= d.maxRetries; attempt++ {
 		if attempt > 0 {
 			backoff := d.backoffFor(attempt)
-			slog.Debug("action: retrying", "fingerprint", fp, "attempt", attempt, "backoff", backoff)
+			slog.Debug("action: retrying", "action", ac.Type, "attempt", attempt, "backoff", backoff)
 			d.Counters.Retry++
 			select {
 			case <-time.After(backoff):
@@ -101,7 +85,7 @@ func (d *Dispatcher) executeWithRetry(ctx context.Context, km *killmail.Killmail
 
 		if err := handler.Execute(ctx, km, ac.Args); err != nil {
 			lastErr = err
-			slog.Warn("action: attempt failed", "fingerprint", fp, "attempt", attempt, "error", err)
+			slog.Warn("action: attempt failed", "action", ac.Type, "attempt", attempt, "error", err)
 			continue
 		}
 		return nil

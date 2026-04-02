@@ -5,7 +5,6 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"os"
-	"path/filepath"
 	"testing"
 	"time"
 
@@ -13,7 +12,6 @@ import (
 	"zkill-bot/internal/enrichment"
 	"zkill-bot/internal/killmail"
 	"zkill-bot/internal/rules"
-	"zkill-bot/internal/state"
 )
 
 // TestPipeline_EndToEnd feeds a known killmail JSON fixture through the full
@@ -91,8 +89,7 @@ func TestPipeline_EndToEnd(t *testing.T) {
 	}))
 	defer srv.Close()
 
-	st, _ := state.Load(filepath.Join(t.TempDir(), "state.json"))
-	d := actions.NewDispatcher(st, srv.Client(), 0, time.Millisecond, time.Millisecond)
+	d := actions.NewDispatcher(srv.Client(), 0, time.Millisecond, time.Millisecond)
 
 	webhookMatches := []rules.RuleMatch{
 		{
@@ -110,11 +107,5 @@ func TestPipeline_EndToEnd(t *testing.T) {
 	}
 	if d.Counters.Success != 1 {
 		t.Errorf("dispatcher.Success: got %d, want 1", d.Counters.Success)
-	}
-
-	// --- Idempotency: re-running should skip ---
-	d.Run(context.Background(), km, webhookMatches)
-	if d.Counters.SkipDupe != 1 {
-		t.Errorf("dispatcher.SkipDupe: got %d, want 1", d.Counters.SkipDupe)
 	}
 }

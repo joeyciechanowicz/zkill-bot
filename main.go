@@ -70,7 +70,6 @@ func main() {
 
 	// --- Action dispatcher ---
 	dispatcher := actions.NewDispatcher(
-		st,
 		httpClient,
 		cfg.RetryMaxRetries,
 		cfg.RetryBaseBackoff,
@@ -100,7 +99,6 @@ func main() {
 	rawCh := make(chan []byte, 32)
 	go p.Run(ctx, startSeq, rawCh)
 
-	processed := 0
 	for {
 		select {
 		case raw, ok := <-rawCh:
@@ -108,11 +106,6 @@ func main() {
 				goto shutdown
 			}
 			processKillmail(ctx, raw, enricher, rf, dispatcher, st, m, cfg)
-			processed++
-			// Prune action history every 1000 killmails to bound file size.
-			if processed%1000 == 0 {
-				st.PruneHistory(24 * time.Hour)
-			}
 
 		case <-ctx.Done():
 			goto shutdown
@@ -165,7 +158,6 @@ func processKillmail(
 		m.ActionSuccess.Store(dispatcher.Counters.Success)
 		m.ActionFailure.Store(dispatcher.Counters.Failure)
 		m.ActionRetry.Store(dispatcher.Counters.Retry)
-		m.ActionSkipDupe.Store(dispatcher.Counters.SkipDupe)
 	}
 
 	// Checkpoint: advance after successful processing

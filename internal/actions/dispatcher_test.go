@@ -4,24 +4,13 @@ import (
 	"context"
 	"net/http"
 	"net/http/httptest"
-	"path/filepath"
 	"testing"
 	"time"
 
 	"zkill-bot/internal/actions"
 	"zkill-bot/internal/killmail"
 	"zkill-bot/internal/rules"
-	"zkill-bot/internal/state"
 )
-
-func newState(t *testing.T) *state.State {
-	t.Helper()
-	s, err := state.Load(filepath.Join(t.TempDir(), "state.json"))
-	if err != nil {
-		t.Fatal(err)
-	}
-	return s
-}
 
 func buildKM() *killmail.Killmail {
 	return &killmail.Killmail{
@@ -37,8 +26,7 @@ func buildKM() *killmail.Killmail {
 }
 
 func TestDispatcher_ConsoleAction(t *testing.T) {
-	s := newState(t)
-	d := actions.NewDispatcher(s, http.DefaultClient, 0, time.Millisecond, time.Millisecond)
+	d := actions.NewDispatcher(http.DefaultClient, 0, time.Millisecond, time.Millisecond)
 
 	km := buildKM()
 	matches := []rules.RuleMatch{
@@ -58,29 +46,6 @@ func TestDispatcher_ConsoleAction(t *testing.T) {
 	}
 }
 
-func TestDispatcher_IdempotencyPreventsDoubleExecution(t *testing.T) {
-	s := newState(t)
-	d := actions.NewDispatcher(s, http.DefaultClient, 0, time.Millisecond, time.Millisecond)
-
-	km := buildKM()
-	matches := []rules.RuleMatch{
-		{
-			Rule:    &rules.Rule{Name: "test-rule"},
-			Actions: []rules.ActionConfig{{Type: "console"}},
-		},
-	}
-
-	d.Run(context.Background(), km, matches)
-	d.Run(context.Background(), km, matches) // second call should be skipped
-
-	if d.Counters.SkipDupe != 1 {
-		t.Errorf("SkipDupe: got %d, want 1", d.Counters.SkipDupe)
-	}
-	if d.Counters.Success != 1 {
-		t.Errorf("Success: got %d, want 1 (not 2)", d.Counters.Success)
-	}
-}
-
 func TestDispatcher_WebhookAction(t *testing.T) {
 	called := false
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -89,8 +54,7 @@ func TestDispatcher_WebhookAction(t *testing.T) {
 	}))
 	defer srv.Close()
 
-	s := newState(t)
-	d := actions.NewDispatcher(s, srv.Client(), 0, time.Millisecond, time.Millisecond)
+	d := actions.NewDispatcher(srv.Client(), 0, time.Millisecond, time.Millisecond)
 
 	km := buildKM()
 	matches := []rules.RuleMatch{
@@ -114,8 +78,7 @@ func TestDispatcher_WebhookAction(t *testing.T) {
 }
 
 func TestDispatcher_UnknownActionType(t *testing.T) {
-	s := newState(t)
-	d := actions.NewDispatcher(s, http.DefaultClient, 0, time.Millisecond, time.Millisecond)
+	d := actions.NewDispatcher(http.DefaultClient, 0, time.Millisecond, time.Millisecond)
 
 	km := buildKM()
 	matches := []rules.RuleMatch{
@@ -144,8 +107,7 @@ func TestDispatcher_WebhookRetry(t *testing.T) {
 	}))
 	defer srv.Close()
 
-	s := newState(t)
-	d := actions.NewDispatcher(s, srv.Client(), 3, time.Millisecond, 10*time.Millisecond)
+	d := actions.NewDispatcher(srv.Client(), 3, time.Millisecond, 10*time.Millisecond)
 
 	km := buildKM()
 	matches := []rules.RuleMatch{

@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-	"time"
 )
 
 // State is the persistent runtime state serialized to a JSON file.
@@ -13,10 +12,6 @@ type State struct {
 	// LastSequence is the most recently successfully processed sequence ID.
 	// On restart, polling resumes at LastSequence+1.
 	LastSequence int64 `json:"last_sequence"`
-
-	// ActionHistory maps action fingerprints to when they were executed.
-	// Fingerprint format: "<killmail_id>:<rule_name>:<action_type>"
-	ActionHistory map[string]time.Time `json:"action_history"`
 
 	path string // file path, not serialized
 }
@@ -27,10 +22,7 @@ func Load(path string) (*State, error) {
 	data, err := os.ReadFile(path)
 	if err != nil {
 		if os.IsNotExist(err) {
-			return &State{
-				ActionHistory: make(map[string]time.Time),
-				path:          path,
-			}, nil
+			return &State{path: path}, nil
 		}
 		return nil, fmt.Errorf("state: read %q: %w", path, err)
 	}
@@ -38,9 +30,6 @@ func Load(path string) (*State, error) {
 	var s State
 	if err := json.Unmarshal(data, &s); err != nil {
 		return nil, fmt.Errorf("state: parse %q: %w", path, err)
-	}
-	if s.ActionHistory == nil {
-		s.ActionHistory = make(map[string]time.Time)
 	}
 	s.path = path
 	return &s, nil
@@ -74,30 +63,4 @@ func (s *State) Save() error {
 		return fmt.Errorf("state: rename temp to %q: %w", s.path, err)
 	}
 	return nil
-}
-
-// HasExecuted reports whether fingerprint has already been recorded.
-func (s *State) HasExecuted(fingerprint string) bool {
-	_, ok := s.ActionHistory[fingerprint]
-	return ok
-}
-
-// RecordExecution marks fingerprint as executed at the current time.
-func (s *State) RecordExecution(fingerprint string) {
-	s.ActionHistory[fingerprint] = time.Now().UTC()
-}
-
-// PruneHistory removes action history entries older than maxAge.
-func (s *State) PruneHistory(maxAge time.Duration) {
-	cutoff := time.Now().UTC().Add(-maxAge)
-	for fp, t := range s.ActionHistory {
-		if t.Before(cutoff) {
-			delete(s.ActionHistory, fp)
-		}
-	}
-}
-
-// Fingerprint constructs a canonical idempotency key for a killmail action.
-func Fingerprint(killmailID int64, ruleName, actionType string) string {
-	return fmt.Sprintf("%d:%s:%s", killmailID, ruleName, actionType)
 }

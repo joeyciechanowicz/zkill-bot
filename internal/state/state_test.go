@@ -4,7 +4,6 @@ import (
 	"os"
 	"path/filepath"
 	"testing"
-	"time"
 
 	"zkill-bot/internal/state"
 )
@@ -22,9 +21,6 @@ func TestLoad_NewFile(t *testing.T) {
 	if s.LastSequence != 0 {
 		t.Errorf("LastSequence: got %d, want 0", s.LastSequence)
 	}
-	if s.ActionHistory == nil {
-		t.Error("ActionHistory: expected non-nil map")
-	}
 }
 
 func TestSaveAndLoad_RoundTrip(t *testing.T) {
@@ -32,7 +28,6 @@ func TestSaveAndLoad_RoundTrip(t *testing.T) {
 	s, _ := state.Load(path)
 
 	s.LastSequence = 12345
-	s.RecordExecution("12345:my-rule:webhook")
 
 	if err := s.Save(); err != nil {
 		t.Fatalf("Save: %v", err)
@@ -45,16 +40,9 @@ func TestSaveAndLoad_RoundTrip(t *testing.T) {
 	if s2.LastSequence != 12345 {
 		t.Errorf("LastSequence: got %d, want 12345", s2.LastSequence)
 	}
-	if !s2.HasExecuted("12345:my-rule:webhook") {
-		t.Error("HasExecuted: expected true for recorded fingerprint")
-	}
-	if s2.HasExecuted("other:fingerprint") {
-		t.Error("HasExecuted: expected false for unrecorded fingerprint")
-	}
 }
 
 func TestSave_AtomicWrite(t *testing.T) {
-	// Verify the file ends up at the expected path (not a temp name).
 	path := tempPath(t)
 	s, _ := state.Load(path)
 	s.LastSequence = 99
@@ -71,36 +59,5 @@ func TestSave_AtomicWrite(t *testing.T) {
 		if e.Name() != filepath.Base(path) {
 			t.Errorf("unexpected file in state dir: %s", e.Name())
 		}
-	}
-}
-
-func TestPruneHistory(t *testing.T) {
-	path := tempPath(t)
-	s, _ := state.Load(path)
-
-	s.RecordExecution("old-entry")
-	// Prune with negative age so cutoff is in the future — removes everything.
-	s.PruneHistory(-time.Hour)
-	if s.HasExecuted("old-entry") {
-		t.Error("PruneHistory: expected old-entry to be pruned")
-	}
-}
-
-func TestPruneHistory_KeepsRecent(t *testing.T) {
-	path := tempPath(t)
-	s, _ := state.Load(path)
-
-	s.RecordExecution("recent")
-	s.PruneHistory(24 * time.Hour) // recent entries should survive
-	if !s.HasExecuted("recent") {
-		t.Error("PruneHistory: expected recent entry to survive")
-	}
-}
-
-func TestFingerprint(t *testing.T) {
-	fp := state.Fingerprint(134435757, "my-rule", "webhook")
-	want := "134435757:my-rule:webhook"
-	if fp != want {
-		t.Errorf("Fingerprint: got %q, want %q", fp, want)
 	}
 }
