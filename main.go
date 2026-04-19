@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"sync/atomic"
 	"syscall"
 	"time"
 
@@ -40,6 +41,13 @@ func main() {
 	}
 
 	slog.Info("rules loaded", "count", len(cfg.Rules.Rules), "mode", cfg.Rules.Mode)
+
+	// liveCfg is swapped atomically by the config watcher goroutine.
+	var liveCfg atomic.Pointer[config.Config]
+	liveCfg.Store(cfg)
+	go config.Watch(ctx, *configPath, 5*time.Second, func(newCfg *config.Config) {
+		liveCfg.Store(newCfg)
+	})
 
 	// --- Enrichment ---
 	enricher := enrichment.New()
@@ -98,7 +106,8 @@ func main() {
 			if !ok {
 				goto shutdown
 			}
-			processKillmail(ctx, raw, enricher, &cfg.Rules, dispatcher, st, m, cfg)
+			current := liveCfg.Load()
+			processKillmail(ctx, raw, enricher, &current.Rules, dispatcher, st, m, current)
 
 		case <-ctx.Done():
 			goto shutdown

@@ -1,8 +1,10 @@
 package config
 
 import (
+	"context"
 	"errors"
 	"fmt"
+	"log/slog"
 	"net/url"
 	"os"
 	"strings"
@@ -98,6 +100,49 @@ func applyDefaults(c *Config) {
 	}
 	if c.Rules.Mode == "" {
 		c.Rules.Mode = rules.ModeFirstMatch
+	}
+}
+
+// Watch polls path for modification time changes every interval and calls
+// onChange with the newly loaded config. Invalid reloads are logged and
+// skipped — the previous config remains active. Runs until ctx is cancelled.
+//
+// Fields that are wired into already-running goroutines at startup
+// (poll_interval_ms, poll_404_backoff_ms, retry_*, state_file_path,
+// r2z2_base_url, metrics_log_interval_ms) are read from the new config
+// object but have no effect on those goroutines until the next restart.
+func Watch(ctx context.Context, path string, interval time.Duration, onChange func(*Config)) {
+	info, err := os.Stat(path)
+	if err != nil {
+		slog.Warn("config: watch: initial stat failed", "path", path, "error", err)
+		return
+	}
+	lastMod := info.ModTime()
+
+	t := time.NewTicker(interval)
+	defer t.Stop()
+	for {
+		select {
+		case <-t.C:
+			info, err := os.Stat(path)
+			if err != nil {
+				slog.Warn("config: watch: stat failed", "path", path, "error", err)
+				continue
+			}
+			if !info.ModTime().After(lastMod) {
+				continue
+			}
+			lastMod = info.ModTime()
+			cfg, err := Load(path)
+			if err != nil {
+				slog.Warn("config: hot-reload failed, keeping previous config", "error", err)
+				continue
+			}
+			slog.Info("config: hot-reloaded", "rules", len(cfg.Rules.Rules), "mode", cfg.Rules.Mode)
+			onChange(cfg)
+		case <-ctx.Done():
+			return
+		}
 	}
 }
 
