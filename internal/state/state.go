@@ -58,6 +58,9 @@ func (s *State) Save() error {
 		os.Remove(tmpName)
 		return fmt.Errorf("state: close temp file: %w", err)
 	}
+	// Remove destination first — required on Windows where Rename fails if
+	// the target already exists.
+	os.Remove(s.path)
 	if err := os.Rename(tmpName, s.path); err != nil {
 		os.Remove(tmpName)
 		return fmt.Errorf("state: rename temp to %q: %w", s.path, err)

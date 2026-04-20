@@ -92,12 +92,13 @@ The `filter:` block describes what a killmail must look like to match the rule. 
 
 ### Kill type
 
-| Filter              | Values           | What it means                                                                            |
-| ------------------- | ---------------- | ---------------------------------------------------------------------------------------- |
-| `solo: true`        | `true` / `false` | zKillboard flagged this as a solo kill                                                   |
-| `npc: true`         | `true` / `false` | The kill involved NPCs                                                                   |
-| `awox: true`        | `true` / `false` | The victim was killed by their own corp                                                  |
-| `has_capital: true` | `true` / `false` | A capital ship (Titan, Dreadnought, Carrier, Supercarrier, Force Auxiliary) was involved |
+| Filter                   | Values           | What it means                                                                            |
+| ------------------------ | ---------------- | ---------------------------------------------------------------------------------------- |
+| `solo: true`             | `true` / `false` | zKillboard flagged this as a solo kill                                                   |
+| `npc: true`              | `true` / `false` | The kill involved NPCs                                                                   |
+| `awox: true`             | `true` / `false` | The victim was killed by their own corp                                                  |
+| `has_capital: true`      | `true` / `false` | A capital ship (Titan, Dreadnought, Carrier, Supercarrier, Force Auxiliary) was involved |
+| `thera_wormhole: ["J005663"]` | list of system names | Kill occurred in one of the listed systems AND that system has an active Eve Scout wormhole connection |
 
 ```yaml
 filter:
@@ -387,6 +388,29 @@ Read this as: _"Value at least 500M ISK, AND (in Jita or Amarr OR involves a cap
   actions:
     - type: console
 ```
+
+### Kill in a system with a Thera or Turnur wormhole
+
+Alerts when a kill happens in a system that currently has an active wormhole connection to one of the listed hub systems, according to [Eve Scout](https://eve-scout.com). The connection details (signature IDs, wormhole type, max ship size, remaining hours) are included in the notification.
+
+```yaml
+- name: "thera-connected-kill"
+  enabled: true
+  priority: 5
+  filter:
+    thera_wormhole: ["J005663", "J154900"]
+  actions:
+    - type: webhook
+      args:
+        url: "https://discord.com/api/webhooks/..."
+        template: "default"
+```
+
+This matches kills in J005663 or J154900 only when Eve Scout reports an active wormhole connection for that system at the time the kill is processed. No separate `solar_system_name` filter is needed.
+
+> **Note:** Wormhole data is fetched from `api.eve-scout.com` at startup and then refreshed every 5 minutes in the background (configurable via `evescout_poll_interval_ms`). The filter reflects whichever connections were active at the last refresh.
+
+---
 
 ### Any kill in wormhole space
 

@@ -1,8 +1,10 @@
 package config
 
 import (
+	"context"
 	"errors"
 	"fmt"
+	"log/slog"
 	"net/url"
 	"os"
 	"strings"
@@ -31,6 +33,9 @@ type Config struct {
 	RetryBaseBackoffMS int `yaml:"retry_base_backoff_ms"`
 	RetryMaxBackoffMS  int `yaml:"retry_max_backoff_ms"`
 
+	// Eve Scout
+	EveScoutPollIntervalMS int `yaml:"evescout_poll_interval_ms"`
+
 	// Observability
 	Debug                   bool   `yaml:"debug"`
 	MetricsLogIntervalMS    int    `yaml:"metrics_log_interval_ms"`
@@ -47,7 +52,8 @@ func (c *Config) PollInterval() time.Duration   { return ms(c.PollIntervalMS, 10
 func (c *Config) Poll404Backoff() time.Duration  { return ms(c.Poll404BackoffMS, 6000) }
 func (c *Config) RetryBaseBackoff() time.Duration { return ms(c.RetryBaseBackoffMS, 250) }
 func (c *Config) RetryMaxBackoff() time.Duration  { return ms(c.RetryMaxBackoffMS, 10000) }
-func (c *Config) MetricsLogInterval() time.Duration { return ms(c.MetricsLogIntervalMS, 60000) }
+func (c *Config) MetricsLogInterval() time.Duration    { return ms(c.MetricsLogIntervalMS, 60000) }
+func (c *Config) EveScoutPollInterval() time.Duration { return ms(c.EveScoutPollIntervalMS, 300000) }
 
 func ms(v, def int) time.Duration {
 	if v <= 0 {
@@ -101,6 +107,49 @@ func applyDefaults(c *Config) {
 	}
 }
 
+// Watch polls path for modification time changes every interval and calls
+// onChange with the newly loaded config. Invalid reloads are logged and
+// skipped — the previous config remains active. Runs until ctx is cancelled.
+//
+// Fields that are wired into already-running goroutines at startup
+// (poll_interval_ms, poll_404_backoff_ms, retry_*, state_file_path,
+// r2z2_base_url, metrics_log_interval_ms) are read from the new config
+// object but have no effect on those goroutines until the next restart.
+func Watch(ctx context.Context, path string, interval time.Duration, onChange func(*Config)) {
+	info, err := os.Stat(path)
+	if err != nil {
+		slog.Warn("config: watch: initial stat failed", "path", path, "error", err)
+		return
+	}
+	lastMod := info.ModTime()
+
+	t := time.NewTicker(interval)
+	defer t.Stop()
+	for {
+		select {
+		case <-t.C:
+			info, err := os.Stat(path)
+			if err != nil {
+				slog.Warn("config: watch: stat failed", "path", path, "error", err)
+				continue
+			}
+			if !info.ModTime().After(lastMod) {
+				continue
+			}
+			lastMod = info.ModTime()
+			cfg, err := Load(path)
+			if err != nil {
+				slog.Warn("config: hot-reload failed, keeping previous config", "error", err)
+				continue
+			}
+			slog.Info("config: hot-reloaded", "rules", len(cfg.Rules.Rules), "mode", cfg.Rules.Mode)
+			onChange(cfg)
+		case <-ctx.Done():
+			return
+		}
+	}
+}
+
 func validate(c *Config) []string {
 	var errs []string
 
@@ -112,6 +161,8 @@ func validate(c *Config) []string {
 			errs = append(errs, fmt.Sprintf("alert_webhook_url=%q: invalid URL", c.AlertWebhookURL))
 		}
 	}
+
+
 	if c.Rules.Mode != rules.ModeFirstMatch && c.Rules.Mode != rules.ModeMultiMatch {
 		errs = append(errs, fmt.Sprintf("rules.mode=%q: must be %q or %q", c.Rules.Mode, rules.ModeFirstMatch, rules.ModeMultiMatch))
 	}

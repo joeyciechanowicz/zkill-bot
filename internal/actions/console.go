@@ -40,13 +40,27 @@ func (ConsoleAction) Execute(_ context.Context, km *killmail.Killmail, _ map[str
 		flagStr = " | " + strings.Join(flags, ", ")
 	}
 
+	whStr := ""
+	if km.Enriched != nil && len(km.Enriched.WormholeConnections) > 0 {
+		parts := make([]string, 0, len(km.Enriched.WormholeConnections))
+		for _, sig := range km.Enriched.WormholeConnections {
+			parts = append(parts, fmt.Sprintf("%s→%s [%s/%s, %s, %.0fh]",
+				sig.InSignature, sig.OutSignature,
+				sig.WHType, sig.MaxShipSize,
+				sig.OutSystemName,
+				sig.RemainingHours,
+			))
+		}
+		whStr = " | WH: " + strings.Join(parts, "; ")
+	}
+
 	finalBlowChar := int64(0)
 	if km.FinalBlow != nil {
 		finalBlowChar = km.FinalBlow.CharacterID
 	}
 
 	sb.WriteString(fmt.Sprintf(
-		"[%s] Kill #%d | %s | Victim: Corp:%d | Ship: %s | Attackers: %d | Value: %s | System: %s | FinalBlow: %d%s\n",
+		"[%s] Kill #%d | %s | Victim: Corp:%d | Ship: %s | Attackers: %d | Value: %s | System: %s | FinalBlow: %d%s%s\n",
 		km.KillmailTime.Format("2006-01-02T15:04:05Z"),
 		km.KillmailID,
 		zkbURL(km.KillmailID),
@@ -57,6 +71,7 @@ func (ConsoleAction) Execute(_ context.Context, km *killmail.Killmail, _ map[str
 		systemName(km),
 		finalBlowChar,
 		flagStr,
+		whStr,
 	))
 
 	fmt.Print(sb.String())
