@@ -75,8 +75,12 @@ type EnrichedData struct {
 	AttackerShips []ShipInfo
 	ItemNames     []string // parallel slice to Killmail.Items
 
-	HasCapital     bool
+	HasCapital      bool
 	SolarSystemName string
+
+	// WormholeConnections lists out_system_name values from Eve Scout for
+	// signatures whose in_system_name matches this kill's solar system.
+	WormholeConnections []string
 }
 
 // ShipInfo holds enriched type data for a single ship.

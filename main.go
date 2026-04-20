@@ -14,6 +14,7 @@ import (
 	"zkill-bot/internal/actions"
 	"zkill-bot/internal/config"
 	"zkill-bot/internal/enrichment"
+	"zkill-bot/internal/evescout"
 	"zkill-bot/internal/killmail"
 	"zkill-bot/internal/metrics"
 	"zkill-bot/internal/poller"
@@ -69,6 +70,9 @@ func main() {
 	// --- Notifier ---
 	notifier := metrics.NewNotifier(cfg.AlertWebhookURL, httpClient)
 
+	// --- Eve Scout wormhole client ---
+	esClient := evescout.New(httpClient)
+
 	// --- Action dispatcher ---
 	dispatcher := actions.NewDispatcher(
 		httpClient,
@@ -107,7 +111,7 @@ func main() {
 				goto shutdown
 			}
 			current := liveCfg.Load()
-			processKillmail(ctx, raw, enricher, &current.Rules, dispatcher, st, m, current)
+			processKillmail(ctx, raw, enricher, esClient, &current.Rules, dispatcher, st, m, current)
 
 		case <-ctx.Done():
 			goto shutdown
@@ -130,6 +134,7 @@ func processKillmail(
 	ctx context.Context,
 	raw []byte,
 	enricher *enrichment.Enricher,
+	es *evescout.Client,
 	rf *rules.RuleFile,
 	dispatcher *actions.Dispatcher,
 	st *state.State,
@@ -144,6 +149,14 @@ func processKillmail(
 	}
 
 	enricher.Enrich(km)
+
+	if km.Enriched != nil && km.Enriched.SolarSystemName != "" {
+		if conns, err := es.Lookup(km.Enriched.SolarSystemName); err != nil {
+			slog.Warn("evescout: lookup failed", "system", km.Enriched.SolarSystemName, "error", err)
+		} else {
+			km.Enriched.WormholeConnections = conns
+		}
+	}
 
 	matches := rules.Evaluate(km, rf)
 	m.RuleMatches.Add(int64(len(matches)))
