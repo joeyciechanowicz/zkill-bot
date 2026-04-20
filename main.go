@@ -105,7 +105,8 @@ func main() {
 	// --- Eve Scout startup check ---
 	// Alert if any watched solar systems (from solar_system_name filters) have
 	// active Thera/Turnur wormhole connections right now.
-	checkWormholesAtStartup(ctx, esClient, &cfg.Rules, notifier)
+	theraNotifier := metrics.NewNotifier(cfg.TheraWormholeWebhookURL, httpClient)
+	checkWormholesAtStartup(ctx, esClient, &cfg.Rules, theraNotifier)
 
 	// --- Poll loop ---
 	rawCh := make(chan []byte, 32)

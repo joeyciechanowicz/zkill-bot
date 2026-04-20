@@ -37,6 +37,7 @@ type Config struct {
 	Debug                   bool   `yaml:"debug"`
 	MetricsLogIntervalMS    int    `yaml:"metrics_log_interval_ms"`
 	AlertWebhookURL         string `yaml:"alert_webhook_url"`
+	TheraWormholeWebhookURL string `yaml:"thera_wormhole_url"`
 	ObsRepeated403Threshold int    `yaml:"obs_repeated_403_threshold"`
 	ObsRepeated429Threshold int    `yaml:"obs_repeated_429_threshold"`
 
@@ -155,6 +156,11 @@ func validate(c *Config) []string {
 	if c.AlertWebhookURL != "" {
 		if _, err := url.ParseRequestURI(c.AlertWebhookURL); err != nil {
 			errs = append(errs, fmt.Sprintf("alert_webhook_url=%q: invalid URL", c.AlertWebhookURL))
+		}
+	}
+	if c.TheraWormholeWebhookURL != "" {
+		if _, err := url.ParseRequestURI(c.TheraWormholeWebhookURL); err != nil {
+			errs = append(errs, fmt.Sprintf("thera_wormhole_url=%q: invalid URL", c.TheraWormholeWebhookURL))
 		}
 	}
 	if c.Rules.Mode != rules.ModeFirstMatch && c.Rules.Mode != rules.ModeMultiMatch {
