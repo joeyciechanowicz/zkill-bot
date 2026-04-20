@@ -98,7 +98,7 @@ The `filter:` block describes what a killmail must look like to match the rule. 
 | `npc: true`              | `true` / `false` | The kill involved NPCs                                                                   |
 | `awox: true`             | `true` / `false` | The victim was killed by their own corp                                                  |
 | `has_capital: true`      | `true` / `false` | A capital ship (Titan, Dreadnought, Carrier, Supercarrier, Force Auxiliary) was involved |
-| `thera_wormhole: ["Thera", "Turnur"]` | list of hub names | The kill's solar system has an active Eve Scout connection to any of the listed hubs |
+| `thera_wormhole: true` | `true` / `false` | The kill's solar system has an active Eve Scout wormhole connection (Thera or Turnur) |
 
 ```yaml
 filter:
@@ -398,7 +398,7 @@ Alerts when a kill happens in a system that currently has an active wormhole con
   enabled: true
   priority: 5
   filter:
-    thera_wormhole: ["Thera", "Turnur"]
+    thera_wormhole: true
   actions:
     - type: webhook
       args:
@@ -406,19 +406,21 @@ Alerts when a kill happens in a system that currently has an active wormhole con
         template: "default"
 ```
 
-To only alert on Thera connections (ignoring Turnur), use a single-entry list:
-
-```yaml
-filter:
-  thera_wormhole: ["Thera"]
-```
-
-Combine with other filters — for example, only high-value kills in Thera-connected systems:
+Combine with `solar_system_name` to only alert for specific systems:
 
 ```yaml
 filter:
   and:
-    - thera_wormhole: ["Thera", "Turnur"]
+    - solar_system_name: ["J005663", "J154900"]
+    - thera_wormhole: true
+```
+
+Or with value filters:
+
+```yaml
+filter:
+  and:
+    - thera_wormhole: true
     - zkb_value_min: 500000000
     - npc: false
 ```

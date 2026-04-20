@@ -54,8 +54,8 @@ type FilterNode struct {
 	HasCapital *bool `yaml:"has_capital"`
 
 	// TheraWormhole matches if the kill's solar system has an active Eve Scout
-	// connection to any of the listed hub systems (e.g. ["Thera", "Turnur"]).
-	TheraWormhole []string `yaml:"thera_wormhole"`
+	// wormhole connection (Thera or Turnur).
+	TheraWormhole *bool `yaml:"thera_wormhole"`
 
 	// Value
 	ZKBValueMin *float64 `yaml:"zkb_value_min"`
@@ -198,18 +198,10 @@ func matchFilter(km *killmail.Killmail, f *FilterNode) bool {
 		return false
 	}
 
-	// Thera/Turnur wormhole — any connection's OutSystemName must be in the list
-	if len(f.TheraWormhole) > 0 {
-		matched := false
-		if km.Enriched != nil {
-			for _, sig := range km.Enriched.WormholeConnections {
-				if containsString(f.TheraWormhole, sig.OutSystemName) {
-					matched = true
-					break
-				}
-			}
-		}
-		if !matched {
+	// Thera/Turnur wormhole
+	if f.TheraWormhole != nil {
+		has := km.Enriched != nil && len(km.Enriched.WormholeConnections) > 0
+		if has != *f.TheraWormhole {
 			return false
 		}
 	}

@@ -23,7 +23,7 @@ import (
 )
 
 func main() {
-	configPath := flag.String("config", "./config.yaml", "path to config file")
+	configPath := flag.String("config", "/home/sasha/Downloads/config.yaml", "path to config file")
 	flag.Parse()
 
 	// Signal-aware context for graceful shutdown.
