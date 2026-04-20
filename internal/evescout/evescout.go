@@ -15,6 +15,7 @@ const apiBase = "https://api.eve-scout.com/v2/public/signatures"
 
 // Signature is a single wormhole connection returned by the Eve Scout API.
 type Signature struct {
+	ID             string  `json:"id"`
 	WHType         string  `json:"wh_type"`
 	MaxShipSize    string  `json:"max_ship_size"`
 	ExpiresAt      string  `json:"expires_at"`
@@ -35,23 +36,24 @@ type Signature struct {
 
 // Client fetches and caches Eve Scout wormhole signatures.
 type Client struct {
-	hc  *http.Client
+	hc *http.Client
 
 	mu      sync.RWMutex
 	cache   []Signature
-	cacheAt time.Time
+	seen    map[string]bool // signature IDs present in the previous refresh
 }
 
 func New(hc *http.Client) *Client {
-	return &Client{hc: hc}
+	return &Client{hc: hc, seen: map[string]bool{}}
 }
 
-// StartPoller runs a background goroutine that refreshes the signature cache
-// on the given interval until ctx is cancelled.
-func (c *Client) StartPoller(ctx context.Context, interval time.Duration) {
+// StartPoller runs a background goroutine that refreshes the signature cache on
+// the given interval until ctx is cancelled. onNew is called for each signature
+// whose in_system_name is in watchSystems and whose ID was not present in the
+// previous refresh — i.e. it is a newly discovered connection.
+func (c *Client) StartPoller(ctx context.Context, interval time.Duration, watchSystems []string, onNew func(Signature)) {
 	go func() {
-		// Fetch immediately so the cache is warm before the first kill arrives.
-		if err := c.Refresh(); err != nil {
+		if err := c.refresh(watchSystems, onNew); err != nil {
 			slog.Warn("evescout: initial fetch failed", "error", err)
 		}
 		t := time.NewTicker(interval)
@@ -59,7 +61,7 @@ func (c *Client) StartPoller(ctx context.Context, interval time.Duration) {
 		for {
 			select {
 			case <-t.C:
-				if err := c.Refresh(); err != nil {
+				if err := c.refresh(watchSystems, onNew); err != nil {
 					slog.Warn("evescout: background refresh failed", "error", err)
 				}
 			case <-ctx.Done():
@@ -67,34 +69,6 @@ func (c *Client) StartPoller(ctx context.Context, interval time.Duration) {
 			}
 		}
 	}()
-}
-
-// Refresh forces an immediate fetch from the API, bypassing the cache.
-func (c *Client) Refresh() error {
-	thera, err := c.fetchURL(apiBase + "?system_name=thera")
-	if err != nil {
-		return err
-	}
-	turnur, err := c.fetchURL(apiBase + "?system_name=turnur")
-	if err != nil {
-		return err
-	}
-	all := append(thera, turnur...)
-
-	c.mu.Lock()
-	c.cache = all
-	c.cacheAt = time.Now()
-	c.mu.Unlock()
-
-	slog.Debug("evescout: cache refreshed", "signatures", len(all))
-	return nil
-}
-
-// FetchAll returns all current signatures (Thera + Turnur) from the cache.
-func (c *Client) FetchAll() []Signature {
-	c.mu.RLock()
-	defer c.mu.RUnlock()
-	return c.cache
 }
 
 // Lookup returns all signatures whose in_system_name matches the given solar
@@ -109,6 +83,43 @@ func (c *Client) Lookup(systemName string) []Signature {
 		}
 	}
 	return out
+}
+
+func (c *Client) refresh(watchSystems []string, onNew func(Signature)) error {
+	thera, err := c.fetchURL(apiBase + "?system_name=thera")
+	if err != nil {
+		return err
+	}
+	turnur, err := c.fetchURL(apiBase + "?system_name=turnur")
+	if err != nil {
+		return err
+	}
+	all := append(thera, turnur...)
+
+	newSeen := make(map[string]bool, len(all))
+	for _, sig := range all {
+		newSeen[sig.ID] = true
+	}
+
+	c.mu.Lock()
+	prev := c.seen
+	c.cache = all
+	c.seen = newSeen
+	c.mu.Unlock()
+
+	slog.Debug("evescout: cache refreshed", "signatures", len(all))
+
+	if onNew != nil {
+		for _, sig := range all {
+			isNew := !prev[sig.ID]
+			isWatched := ContainsIgnoreCase(watchSystems, sig.InSystemName)
+			slog.Debug("evescout: checking signature", "id", sig.ID, "in_system", sig.InSystemName, "is_new", isNew, "is_watched", isWatched)
+			if isNew && isWatched {
+				onNew(sig)
+			}
+		}
+	}
+	return nil
 }
 
 func (c *Client) fetchURL(url string) ([]Signature, error) {
@@ -133,4 +144,13 @@ func (c *Client) fetchURL(url string) ([]Signature, error) {
 		return nil, fmt.Errorf("evescout: decode: %w", err)
 	}
 	return sigs, nil
+}
+
+func ContainsIgnoreCase(slice []string, s string) bool {
+	for _, v := range slice {
+		if strings.EqualFold(v, s) {
+			return true
+		}
+	}
+	return false
 }

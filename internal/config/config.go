@@ -162,6 +162,7 @@ func validate(c *Config) []string {
 		}
 	}
 
+
 	if c.Rules.Mode != rules.ModeFirstMatch && c.Rules.Mode != rules.ModeMultiMatch {
 		errs = append(errs, fmt.Sprintf("rules.mode=%q: must be %q or %q", c.Rules.Mode, rules.ModeFirstMatch, rules.ModeMultiMatch))
 	}

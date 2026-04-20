@@ -93,7 +93,7 @@ rules:
       enabled: false
       priority: 5
       filter:
-        thera_wormhole: true
+        thera_wormhole: ["J123456"]
       actions:
         - type: webhook
           args:

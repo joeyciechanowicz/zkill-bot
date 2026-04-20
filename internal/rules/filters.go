@@ -53,9 +53,10 @@ type FilterNode struct {
 	// Capital
 	HasCapital *bool `yaml:"has_capital"`
 
-	// TheraWormhole matches if the kill's solar system has an active Eve Scout
-	// wormhole connection (Thera or Turnur).
-	TheraWormhole *bool `yaml:"thera_wormhole"`
+	// TheraWormhole takes a list of solar system names and matches if the kill
+	// occurred in one of those systems AND that system has an active Eve Scout
+	// wormhole connection.
+	TheraWormhole []string `yaml:"thera_wormhole"`
 
 	// Value
 	ZKBValueMin *float64 `yaml:"zkb_value_min"`
@@ -198,12 +199,9 @@ func matchFilter(km *killmail.Killmail, f *FilterNode) bool {
 		return false
 	}
 
-	// Thera/Turnur wormhole
-	if f.TheraWormhole != nil {
-		has := km.Enriched != nil && len(km.Enriched.WormholeConnections) > 0
-		if has != *f.TheraWormhole {
-			return false
-		}
+	// thera_wormhole rules are triggered by the Eve Scout poller, never by kills.
+	if len(f.TheraWormhole) > 0 {
+		return false
 	}
 
 	// Capital
