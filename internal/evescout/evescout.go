@@ -14,7 +14,8 @@ const (
 	defaultTTL = 5 * time.Minute
 )
 
-type signature struct {
+// Signature is a single wormhole connection returned by the Eve Scout API.
+type Signature struct {
 	InSystemName  string `json:"in_system_name"`
 	OutSystemName string `json:"out_system_name"`
 	WHType        string `json:"wh_type"`
@@ -27,12 +28,17 @@ type Client struct {
 	ttl time.Duration
 
 	mu      sync.Mutex
-	cache   []signature
+	cache   []Signature
 	cacheAt time.Time
 }
 
 func New(hc *http.Client) *Client {
 	return &Client{hc: hc, ttl: defaultTTL}
+}
+
+// FetchAll returns all current signatures (Thera + Turnur), using the cache if fresh.
+func (c *Client) FetchAll() ([]Signature, error) {
+	return c.fetch()
 }
 
 // Lookup returns the out_system_name values for any signature whose
@@ -51,7 +57,7 @@ func (c *Client) Lookup(systemName string) ([]string, error) {
 	return out, nil
 }
 
-func (c *Client) fetch() ([]signature, error) {
+func (c *Client) fetch() ([]Signature, error) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
@@ -74,7 +80,7 @@ func (c *Client) fetch() ([]signature, error) {
 	return all, nil
 }
 
-func (c *Client) fetchURL(url string) ([]signature, error) {
+func (c *Client) fetchURL(url string) ([]Signature, error) {
 	req, err := http.NewRequest(http.MethodGet, url, nil)
 	if err != nil {
 		return nil, err
@@ -91,7 +97,7 @@ func (c *Client) fetchURL(url string) ([]signature, error) {
 		return nil, fmt.Errorf("evescout: %s returned %d", url, resp.StatusCode)
 	}
 
-	var sigs []signature
+	var sigs []Signature
 	if err := json.NewDecoder(resp.Body).Decode(&sigs); err != nil {
 		return nil, fmt.Errorf("evescout: decode: %w", err)
 	}

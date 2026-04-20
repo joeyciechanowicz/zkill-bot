@@ -42,6 +42,38 @@ type RuleMatch struct {
 	Actions []ActionConfig
 }
 
+// ExtractSolarSystemNames returns all unique solar_system_name values referenced
+// in the filter trees of enabled rules.
+func ExtractSolarSystemNames(rf *RuleFile) []string {
+	seen := map[string]bool{}
+	var out []string
+	for i := range rf.Rules {
+		if !rf.Rules[i].Enabled {
+			continue
+		}
+		collectSystemNames(&rf.Rules[i].Filter, seen, &out)
+	}
+	return out
+}
+
+func collectSystemNames(f *FilterNode, seen map[string]bool, out *[]string) {
+	for _, name := range f.SolarSystemName {
+		if !seen[name] {
+			seen[name] = true
+			*out = append(*out, name)
+		}
+	}
+	for _, child := range f.And {
+		collectSystemNames(child, seen, out)
+	}
+	for _, child := range f.Or {
+		collectSystemNames(child, seen, out)
+	}
+	if f.Not != nil {
+		collectSystemNames(f.Not, seen, out)
+	}
+}
+
 // Evaluate tests km against all enabled rules in priority order.
 // In first-match mode it returns as soon as one rule matches.
 // In multi-match mode it returns all matching rules.

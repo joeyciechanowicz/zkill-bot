@@ -90,6 +90,14 @@ func NewNotifier(webhookURL string, client *http.Client) *Notifier {
 	return &Notifier{webhookURL: webhookURL, client: client}
 }
 
+// Notify sends an arbitrary message to the webhook. No-op if webhookURL is empty.
+func (n *Notifier) Notify(ctx context.Context, content string) {
+	if n.webhookURL == "" {
+		return
+	}
+	n.send(ctx, content)
+}
+
 // NotifyStartup sends a startup message with the starting sequence.
 func (n *Notifier) NotifyStartup(ctx context.Context, startSequence int64) {
 	if n.webhookURL == "" {
