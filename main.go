@@ -1,8 +1,11 @@
 package main
 
 import (
+	"bytes"
 	"context"
+	"encoding/json"
 	"flag"
+	"fmt"
 	"log/slog"
 	"net/http"
 	"os"
@@ -72,7 +75,40 @@ func main() {
 
 	// --- Eve Scout wormhole client ---
 	esClient := evescout.New(httpClient)
-	esClient.StartPoller(ctx, cfg.EveScoutPollInterval())
+
+	// Build the watch list from thera_wormhole filters across all rules.
+	theraWatches := rules.ExtractTheraWatches(&cfg.Rules)
+	var watchSystems []string
+	for _, w := range theraWatches {
+		watchSystems = append(watchSystems, w.Systems...)
+	}
+	slog.Info("evescout: watching systems", "systems", watchSystems)
+
+	esClient.StartPoller(ctx, cfg.EveScoutPollInterval(), watchSystems, func(sig evescout.Signature) {
+		slog.Info("evescout: new connection found", "system", sig.InSystemName, "hub", sig.OutSystemName, "type", sig.WHType, "id", sig.ID)
+		current := liveCfg.Load()
+		for _, watch := range rules.ExtractTheraWatches(&current.Rules) {
+			if !evescout.ContainsIgnoreCase(watch.Systems, sig.InSystemName) {
+				continue
+			}
+			for _, ac := range watch.Actions {
+				switch ac.Type {
+				case "console":
+					fmt.Printf("[WORMHOLE] %s → %s | %s / %s | %s (in) → %s (out) | %.0fh remaining\n",
+						sig.InSystemName, sig.OutSystemName,
+						sig.WHType, sig.MaxShipSize,
+						sig.InSignature, sig.OutSignature,
+						sig.RemainingHours,
+					)
+				case "webhook":
+					url, _ := ac.Args["url"].(string)
+					if url != "" {
+						sendWormholeWebhook(ctx, httpClient, url, sig)
+					}
+				}
+			}
+		}
+	})
 
 	// --- Action dispatcher ---
 	dispatcher := actions.NewDispatcher(
@@ -131,6 +167,33 @@ shutdown:
 	slog.Info("zkill-bot stopped")
 }
 
+
+func sendWormholeWebhook(ctx context.Context, hc *http.Client, webhookURL string, sig evescout.Signature) {
+	msg := fmt.Sprintf(
+		"**New wormhole connection: %s → %s**\nType: %s | Max ship: %s\nSignatures: %s (in) → %s (out)\nExpires in: %.0fh",
+		sig.InSystemName, sig.OutSystemName,
+		sig.WHType, sig.MaxShipSize,
+		sig.InSignature, sig.OutSignature,
+		sig.RemainingHours,
+	)
+	payload, _ := json.Marshal(struct {
+		Content string `json:"content"`
+	}{Content: msg})
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, webhookURL, bytes.NewReader(payload))
+	if err != nil {
+		slog.Warn("evescout: webhook request build failed", "error", err)
+		return
+	}
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("User-Agent", "zkill-bot/1.0")
+	resp, err := hc.Do(req)
+	if err != nil {
+		slog.Warn("evescout: webhook send failed", "error", err)
+		return
+	}
+	resp.Body.Close()
+}
 
 func processKillmail(
 	ctx context.Context,

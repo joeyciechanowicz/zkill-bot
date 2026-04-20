@@ -98,7 +98,7 @@ The `filter:` block describes what a killmail must look like to match the rule. 
 | `npc: true`              | `true` / `false` | The kill involved NPCs                                                                   |
 | `awox: true`             | `true` / `false` | The victim was killed by their own corp                                                  |
 | `has_capital: true`      | `true` / `false` | A capital ship (Titan, Dreadnought, Carrier, Supercarrier, Force Auxiliary) was involved |
-| `thera_wormhole: true` | `true` / `false` | The kill's solar system has an active Eve Scout wormhole connection (Thera or Turnur) |
+| `thera_wormhole: ["J005663"]` | list of system names | Kill occurred in one of the listed systems AND that system has an active Eve Scout wormhole connection |
 
 ```yaml
 filter:
@@ -398,7 +398,7 @@ Alerts when a kill happens in a system that currently has an active wormhole con
   enabled: true
   priority: 5
   filter:
-    thera_wormhole: true
+    thera_wormhole: ["J005663", "J154900"]
   actions:
     - type: webhook
       args:
@@ -406,24 +406,7 @@ Alerts when a kill happens in a system that currently has an active wormhole con
         template: "default"
 ```
 
-Combine with `solar_system_name` to only alert for specific systems:
-
-```yaml
-filter:
-  and:
-    - solar_system_name: ["J005663", "J154900"]
-    - thera_wormhole: true
-```
-
-Or with value filters:
-
-```yaml
-filter:
-  and:
-    - thera_wormhole: true
-    - zkb_value_min: 500000000
-    - npc: false
-```
+This matches kills in J005663 or J154900 only when Eve Scout reports an active wormhole connection for that system at the time the kill is processed. No separate `solar_system_name` filter is needed.
 
 > **Note:** Wormhole data is fetched from `api.eve-scout.com` at startup and then refreshed every 5 minutes in the background (configurable via `evescout_poll_interval_ms`). The filter reflects whichever connections were active at the last refresh.
 
