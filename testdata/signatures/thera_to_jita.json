@@ -1,0 +1,21 @@
+{
+  "signature_id": "def456",
+  "wh_type": "K162",
+  "max_ship_size": "medium",
+  "signature_type": "wormhole",
+  "wh_exits_outward": true,
+  "remaining_hours": 4.0,
+  "in": {
+    "system_id": 31000005,
+    "system_name": "Thera",
+    "system_class": "C-WH",
+    "region_id": 11000031,
+    "region_name": "G-R00031",
+    "signature": "DEF-456"
+  },
+  "out": {
+    "system_id": 30000142,
+    "system_name": "Jita",
+    "signature": "QQQ-111"
+  }
+}

@@ -1,16 +1,22 @@
 # Writing rules
 
-Rules live under a pipeline's `rules:` block in `config.yaml`. Each rule
-binds a boolean expression to a list of actions.
+Sources and rules are sibling top-level blocks in `config.yaml`. Every source
+feeds a shared rule engine; rules may opt into a subset of sources via
+`sources:`, or omit it to see events from every source.
 
 ```yaml
+sources:
+  - name: zkill
+    type: zkill
+
 rules:
-  mode: first-match      # or: multi-match
+  mode: first-match # or: multi-match
   rules:
     - name: high-value-kill
       enabled: true
       priority: 10
-      when: 'zkb.total_value > 1e9'
+      sources: [zkill]          # optional; omit = every source
+      when: "zkb.total_value > 1e9"
       actions:
         - type: console
 ```
@@ -18,39 +24,70 @@ rules:
 ## Fields
 
 Top-level identifiers in a `when:` expression are the keys of `Event.Fields`
-for that source. For the zkill source these are:
+for the event being evaluated. Different sources emit different field sets —
+when a rule is scoped to multiple sources, branch on `event_source` (or
+`event_type`) to select the right shape.
 
-| Identifier           | Type               | Notes                                |
-|----------------------|--------------------|--------------------------------------|
-| `killmail_id`        | int64              |                                      |
-| `hash`               | string             |                                      |
-| `sequence_id`        | int64              |                                      |
-| `uploaded_at`        | time.Time          | zkill upload time                    |
-| `killmail_time`      | time.Time          | in-game event time                   |
-| `solar_system_id`    | int64              |                                      |
-| `solar_system_name`  | string             | from SDE enrichment                  |
-| `victim`             | object             | see below                            |
-| `attackers`          | []object           | see below                            |
-| `attacker_count`     | int                |                                      |
-| `final_blow`         | object             | one entry from attackers             |
-| `items`              | []object           | victim fittings/cargo                |
-| `zkb`                | object             | zKillboard metadata                  |
-| `has_capital`        | bool               | any participant is capital-class     |
+### zkill source
+
+| Identifier          | Type      | Notes                            |
+| ------------------- | --------- | -------------------------------- |
+| `killmail_id`       | int64     |                                  |
+| `hash`              | string    |                                  |
+| `sequence_id`       | int64     |                                  |
+| `uploaded_at`       | time.Time | zkill upload time                |
+| `killmail_time`     | time.Time | in-game event time               |
+| `solar_system_id`   | int64     |                                  |
+| `solar_system_name` | string    | from SDE enrichment              |
+| `victim`            | object    | see below                        |
+| `attackers`         | []object  | see below                        |
+| `attacker_count`    | int       |                                  |
+| `final_blow`        | object    | one entry from attackers         |
+| `items`             | []object  | victim fittings/cargo            |
+| `zkb`               | object    | zKillboard metadata              |
+| `has_capital`       | bool      | any participant is capital-class |
 
 **Victim / attacker / item shapes** mirror the ESI killmail payload plus SDE
 additions: `ship_name`, `ship_group`, `ship_group_id`, `ship_category`,
 `meta_level`, `meta_group` (for ships); `name` for items.
 
+### evescout source
+
+Emits one `signature.added` event per newly reported EVE Scout wormhole
+connection (Thera/Turnur). Fields:
+
+| Identifier         | Type      | Notes                                     |
+| ------------------ | --------- | ----------------------------------------- |
+| `signature_id`     | string    | EVE Scout's row id                        |
+| `wh_type`          | string    | wormhole class code (e.g. `K162`, `C140`) |
+| `max_ship_size`    | string    | `small` / `medium` / `large` / `xlarge`   |
+| `signature_type`   | string    | always `wormhole` today                   |
+| `wh_exits_outward` | bool      | direction of the K162 pair                |
+| `remaining_hours`  | float64   | time until collapse                       |
+| `expires_at`       | time.Time |                                           |
+| `created_at`       | time.Time | when EVE Scout recorded the signature     |
+| `created_by_id`    | int64     |                                           |
+| `created_by_name`  | string    | reporter's character name                 |
+| `in`               | object    | entry system — see below                  |
+| `out`              | object    | exit system — see below                   |
+
+`in` object: `system_id` (int64), `system_name` (string), `system_class`
+(string — `HS`/`LS`/`NS`/`C1`–`C6`/`C13`/`C-WH`/`Thera`), `region_id`
+(int64), `region_name` (string), `signature` (string — e.g. `ABC-123`).
+
+`out` object: `system_id` (int64), `system_name` (string), `signature`
+(string).
+
 ## Built-in helpers
 
 All rule expressions can call:
 
-| Call                                  | Returns                             |
-|---------------------------------------|-------------------------------------|
-| `fact(scope, key)`                    | `any` — JSON-decoded or `nil`       |
-| `fact_exists(scope, key)`             | `bool`                              |
-| `fact_count(scope, prefix)`           | `int`                               |
-| `now()`                               | `time.Time` (UTC)                   |
+| Call                        | Returns                       |
+| --------------------------- | ----------------------------- |
+| `fact(scope, key)`          | `any` — JSON-decoded or `nil` |
+| `fact_exists(scope, key)`   | `bool`                        |
+| `fact_count(scope, prefix)` | `int`                         |
+| `now()`                     | `time.Time` (UTC)             |
 
 Plus the full expr-lang builtins: `any`, `all`, `filter`, `map`, `len`,
 `contains`, `string`, `int`, date/time functions, etc. See
@@ -71,7 +108,7 @@ Plus the full expr-lang builtins: `any`, `all`, `filter`, `map`, `len`,
 ```yaml
 - name: high-value
   priority: 10
-  when: 'zkb.total_value > 1e9'
+  when: "zkb.total_value > 1e9"
   actions:
     - type: console
     - type: webhook
@@ -83,7 +120,7 @@ Plus the full expr-lang builtins: `any`, `all`, `filter`, `map`, `len`,
 ```yaml
 - name: capital
   priority: 20
-  when: 'has_capital && !zkb.npc'
+  when: "has_capital && !zkb.npc"
   actions: [{ type: console }]
 ```
 
@@ -92,18 +129,18 @@ Plus the full expr-lang builtins: `any`, `all`, `filter`, `map`, `len`,
 ```yaml
 - name: record-attacker-kills
   priority: 1
-  continue: true            # don't stop the pipeline at the writer
-  when: 'true'
+  continue: true # don't stop the pipeline at the writer
+  when: "true"
   actions:
     - type: store
       for: attackers
       args:
         scope: kill_by_char
-        key: '{{ .item.character_id }}'
+        key: "{{ .item.character_id }}"
         op: inc
         field: count
         by: 1
-        ttl: 720h             # 30d rolling window
+        ttl: 720h # 30d rolling window
 ```
 
 ### Repeat offender (reads the fact above)
@@ -130,6 +167,139 @@ Plus the full expr-lang builtins: `any`, `all`, `filter`, `map`, `len`,
     && !zkb.npc
   actions: [{ type: console }]
 ```
+
+### Watched wormhole exit (evescout)
+
+```yaml
+- name: watched-wormhole-exit
+  priority: 10
+  when: 'out.system_name in ["J123456", "J234567"]'
+  actions:
+    - type: webhook
+      args:
+        url: https://discord.com/api/webhooks/XXX/YYY
+        body: *discord_signature_embed   # see "Reusable action bodies" below
+```
+
+## Reusable action bodies
+
+Action `args:` (including the `body:` sent by the `webhook` action) are
+templated at dispatch time: every string containing `{{` is run through
+`text/template` with the event fields at the top level, plus `event_id`,
+`event_source`, `event_type`, `occurred_at`, and `item` (for `for:`
+iteration).
+
+To avoid copy-pasting long bodies across rules, use **YAML anchors**. The
+config parser (`yaml.v3`) expands anchors at load time, so the code only
+ever sees the fully-resolved map — no schema changes needed.
+
+```yaml
+# Park anchors under any key the Config struct doesn't declare; yaml.v3
+# ignores unknown top-level keys. `x-templates` is just a convention.
+x-templates:
+  discord_signature_embed: &discord_signature_embed
+    username: "EVE Scout Watch"
+    embeds:
+      - title: "🌌 {{.in.system_name}} → {{.out.system_name}}"
+        color: 15844367
+        timestamp: '{{.created_at.Format "2006-01-02T15:04:05Z07:00"}}'
+        fields:
+          - {
+              name: "Entry",
+              value: "[{{.in.system_name}}](https://evemaps.dotlan.net/system/{{.in.system_name}}) ({{.in.system_class}}) · {{.in.region_name}}",
+              inline: true,
+            }
+          - {
+              name: "Exit",
+              value: "[{{.out.system_name}}](https://evemaps.dotlan.net/system/{{.out.system_name}})",
+              inline: true,
+            }
+          - { name: "Type", value: "{{.wh_type}}", inline: true }
+          - { name: "Max Ship", value: "{{.max_ship_size}}", inline: true }
+          - {
+              name: "Lifetime",
+              value: '{{printf "%.1f" .remaining_hours}}h',
+              inline: true,
+            }
+          - { name: "Reporter", value: "{{.created_by_name}}", inline: true }
+        footer:
+          text: "EVE Scout • {{.signature_id}}"
+
+sources:
+  - name: evescout
+    type: evescout
+    poll_interval: 60s
+
+rules:
+  mode: first-match
+  rules:
+    - name: watched-wormhole-exit
+      sources: [evescout]
+      when: 'out.system_name in ["J123456", "J234567"]'
+      actions:
+        - type: webhook
+          args:
+            url: https://discord.com/api/webhooks/AAA/BBB
+            body: *discord_signature_embed
+
+    - name: thera-jita-bridge
+      sources: [evescout]
+      when: 'out.system_name == "Jita"'
+      actions:
+        - type: webhook
+          args:
+            url: https://discord.com/api/webhooks/CCC/DDD
+            body: *discord_signature_embed
+```
+
+## Cross-source rules
+
+Because every source feeds the same engine and the same SQLite fact store,
+one rule can write a fact on a kill and a different rule can read that fact
+on a signature event. Example: remember high-value wormhole kills, then
+alert when EVE Scout reports a Thera connection into the same system.
+
+```yaml
+rules:
+  mode: multi-match
+  rules:
+    - name: record-wh-high-value
+      sources: [zkill]
+      when: 'zkb.total_value > 1e9 && solar_system_name matches "^J\\d{6}$"'
+      actions:
+        - type: store
+          args:
+            scope: wh_target
+            key: "{{ .solar_system_id }}"
+            op: set
+            field: total_value
+            value: "{{ .zkb.total_value }}"
+            ttl: 720h
+
+    - name: thera-connection-to-target
+      sources: [evescout]
+      when: 'fact_exists("wh_target", string(in.system_id))'
+      actions:
+        - type: console
+```
+
+**Overriding fields in the template** per-rule uses a YAML merge key:
+
+```yaml
+body:
+  <<: *discord_signature_embed
+  username: "Thera Bridge Watch"
+```
+
+**Rules for anchors**
+
+- Define the anchor (`&name`) **before** its first reference (`*name`) in
+  the document.
+- `x-templates:` must not collide with any real top-level key. It won't,
+  because the `Config` struct doesn't declare it.
+- Templating still happens on the resolved body, so `{{...}}` inside the
+  anchor renders per-event at dispatch time — shared structure, per-event
+  values.
 
 ## Validation
 

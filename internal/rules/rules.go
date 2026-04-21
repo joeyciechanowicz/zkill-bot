@@ -40,9 +40,15 @@ type Rule struct {
 	When     string         `yaml:"when"`
 	Continue bool           `yaml:"continue"` // in first-match mode, don't stop here
 	Actions  []ActionConfig `yaml:"actions"`
+	// Sources optionally restricts this rule to events whose event.Source
+	// matches one of the listed configured source names. An empty list means
+	// the rule applies to events from every source.
+	Sources []string `yaml:"sources"`
 
 	// program is the compiled `when` expression. Populated by Compile.
 	program *vm.Program
+	// sourceSet is the fast-path membership check for Sources.
+	sourceSet map[string]struct{}
 }
 
 // Set is a compiled, priority-sorted collection of rules.
@@ -85,6 +91,12 @@ func Compile(mode Mode, raw []Rule) (*Set, error) {
 			return nil, fmt.Errorf("rules: compile %q: %w", r.Name, err)
 		}
 		r.program = prog
+		if len(r.Sources) > 0 {
+			r.sourceSet = make(map[string]struct{}, len(r.Sources))
+			for _, s := range r.Sources {
+				r.sourceSet[s] = struct{}{}
+			}
+		}
 		out[i] = r
 	}
 	sort.SliceStable(out, func(i, j int) bool {
@@ -112,6 +124,11 @@ func (s *Set) Evaluate(ev *event.Event, facts FactStore) []Match {
 		r := &s.Rules[i]
 		if !r.Enabled {
 			continue
+		}
+		if r.sourceSet != nil {
+			if _, ok := r.sourceSet[ev.Source]; !ok {
+				continue
+			}
 		}
 		v, err := expr.Run(r.program, env)
 		if err != nil {

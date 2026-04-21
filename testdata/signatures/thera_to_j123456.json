@@ -1,0 +1,21 @@
+{
+  "signature_id": "abc123",
+  "wh_type": "K162",
+  "max_ship_size": "large",
+  "signature_type": "wormhole",
+  "wh_exits_outward": false,
+  "remaining_hours": 12.5,
+  "in": {
+    "system_id": 31000005,
+    "system_name": "Thera",
+    "system_class": "C-WH",
+    "region_id": 11000031,
+    "region_name": "G-R00031",
+    "signature": "ABC-123"
+  },
+  "out": {
+    "system_id": 31001234,
+    "system_name": "J123456",
+    "signature": "XYZ-789"
+  }
+}

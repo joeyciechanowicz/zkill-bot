@@ -12,73 +12,81 @@ retry:
   base_backoff: 250ms
   max_backoff: 10s
 
-pipelines:
+# Event producers. Each source runs in its own goroutine and feeds the shared
+# rule engine below. The `name` identifies a source instance for checkpoints
+# and is what rules match on via the optional `sources:` field.
+sources:
   - name: zkill
-    source:
-      type: zkill
-      base_url: https://r2z2.zkillboard.com
-      sequence_path: /ephemeral/sequence.json
-      poll_interval: 100ms
-      backoff_404: 6s
-    # Facts loaded before rule evaluation. Each lookup resolves key_path
-    # against the event and places the result under event.facts.<alias>.
-    facts:
-      - scope: hostile
-        key_path: victim.character_id
-        alias: victim_hostile
-    rules:
-      mode: first-match
-      rules:
-        # Always-run writer: counts kills per attacker so later rules can
-        # detect repeat offenders. `continue: true` keeps evaluation going
-        # even after this rule matches.
-        - name: record-attacker-kills
-          enabled: true
-          priority: 1
-          continue: true
-          when: "true"
-          actions:
-            - type: store
-              for: attackers
-              args:
-                scope: "kill_by_char"
-                key: '{{ .item.character_id }}'
-                op: inc
-                field: count
-                by: 1
-                ttl: 720h   # 30d rolling window
+    type: zkill
+    base_url: https://r2z2.zkillboard.com
+    sequence_path: /ephemeral/sequence.json
+    poll_interval: 100ms
+    backoff_404: 6s
 
-        - name: high-value-kill
-          enabled: true
-          priority: 10
-          when: 'zkb.total_value > 1e9'
-          actions:
-            - type: console
+# Shared rule engine. Rules see events from every source unless they opt into
+# a subset via `sources:`. Facts are read with fact()/fact_exists()/fact_count()
+# and written via the `store` action — rules can therefore coordinate across
+# sources (e.g. record a high-value wormhole kill under a key, then have a
+# later rule on the evescout source fire when a Thera connection opens into
+# that system).
+rules:
+  mode: first-match
+  rules:
+    # Always-run writer: counts kills per attacker so later rules can
+    # detect repeat offenders. `continue: true` keeps evaluation going
+    # even after this rule matches.
+    - name: record-attacker-kills
+      enabled: true
+      priority: 1
+      continue: true
+      sources: [zkill]
+      when: "true"
+      actions:
+        - type: store
+          for: attackers
+          args:
+            scope: "kill_by_char"
+            key: '{{ .item.character_id }}'
+            op: inc
+            field: count
+            by: 1
+            ttl: 720h   # 30d rolling window
 
-        - name: capital-kill
-          enabled: true
-          priority: 20
-          when: 'has_capital'
-          actions:
-            - type: console
+    - name: high-value-kill
+      enabled: true
+      priority: 10
+      sources: [zkill]
+      when: 'zkb.total_value > 1e9'
+      actions:
+        - type: console
 
-        - name: repeat-offender
-          enabled: true
-          priority: 30
-          when: |
-            any(attackers, {
-              let f = fact("kill_by_char", string(.character_id));
-              f != nil && f.count >= 5
-            }) && !zkb.npc
-          actions:
-            - type: console
+    - name: capital-kill
+      enabled: true
+      priority: 20
+      sources: [zkill]
+      when: 'has_capital'
+      actions:
+        - type: console
 
-        - name: jita-hub-kill
-          enabled: true
-          priority: 50
-          when: |
-            solar_system_name in ["Jita", "Amarr", "Dodixie", "Rens", "Hek"]
-            && zkb.total_value > 5e8
-            && !zkb.npc
-          actions:
-            - type: console
+    - name: repeat-offender
+      enabled: true
+      priority: 30
+      sources: [zkill]
+      when: |
+        any(attackers, {
+          let f = fact("kill_by_char", string(.character_id));
+          f != nil && f.count >= 5
+        }) && !zkb.npc
+      actions:
+        - type: console
+
+    - name: jita-hub-kill
+      enabled: true
+      priority: 50
+      sources: [zkill]
+      when: |
+        solar_system_name in ["Jita", "Amarr", "Dodixie", "Rens", "Hek"]
+        && zkb.total_value > 5e8
+        && !zkb.npc
+      actions:
+        - type: console

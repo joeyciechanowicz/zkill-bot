@@ -1,6 +1,6 @@
-// Package pipeline wires one Source to its Enricher chain, compiled Rule set,
-// and action Dispatcher. A Runner manages a slice of Pipelines and runs them
-// concurrently until ctx is cancelled.
+// Package pipeline wires a set of Sources to a shared compiled Rule set and
+// action Dispatcher. One goroutine per source feeds events into a shared
+// channel; a single processor goroutine evaluates rules and dispatches.
 package pipeline
 
 import (
@@ -9,47 +9,60 @@ import (
 	"sync"
 
 	"zkill-bot/internal/action"
-	"zkill-bot/internal/enrich"
 	"zkill-bot/internal/event"
 	"zkill-bot/internal/rules"
 	"zkill-bot/internal/source"
 )
 
-// Pipeline is a source-specific event-processing pipeline.
+// Pipeline runs every configured source concurrently and funnels their events
+// through a single shared rule engine.
 type Pipeline struct {
-	Name       string
-	Source     source.Source
-	Enrichers  enrich.Chain
+	Sources    []source.Source
 	Rules      *rules.Set
 	Dispatcher *action.Dispatcher
 	Facts      rules.FactStore // passed to rule expressions
-	BufferSize int             // channel buffer between source and processor
+	BufferSize int             // shared channel buffer
 }
 
-// Run starts the source goroutine and processes events until ctx is done.
+// Run starts every source, processes events until ctx is done, and returns
+// once all source goroutines have exited.
 func (p *Pipeline) Run(ctx context.Context) error {
 	buf := p.BufferSize
 	if buf <= 0 {
-		buf = 32
+		buf = 32 * max(len(p.Sources), 1)
 	}
 	ch := make(chan *event.Event, buf)
 
-	srcDone := make(chan error, 1)
+	var wg sync.WaitGroup
+	for _, src := range p.Sources {
+		wg.Add(1)
+		go func(src source.Source) {
+			defer wg.Done()
+			if err := src.Run(ctx, ch); err != nil {
+				slog.Error("pipeline: source exited with error", "source", src.Name(), "error", err)
+			}
+		}(src)
+	}
+
+	// Close the shared channel once every source has returned, so the
+	// processor loop below can drain and exit cleanly.
+	done := make(chan struct{})
 	go func() {
-		srcDone <- p.Source.Run(ctx, ch)
+		wg.Wait()
 		close(ch)
+		close(done)
 	}()
 
 	for {
 		select {
 		case ev, ok := <-ch:
 			if !ok {
-				return <-srcDone
+				return nil
 			}
 			p.process(ctx, ev)
 		case <-ctx.Done():
-			<-srcDone
-			// Drain remaining events already in the channel so we don't lose them.
+			// Drain remaining events after sources exit so we don't lose them.
+			<-done
 			for ev := range ch {
 				p.process(context.Background(), ev)
 			}
@@ -59,34 +72,9 @@ func (p *Pipeline) Run(ctx context.Context) error {
 }
 
 func (p *Pipeline) process(ctx context.Context, ev *event.Event) {
-	if err := p.Enrichers.Enrich(ctx, ev); err != nil {
-		slog.Warn("pipeline: enrich error", "pipeline", p.Name, "event", ev.ID, "error", err)
-	}
 	matches := p.Rules.Evaluate(ev, p.Facts)
 	if len(matches) == 0 {
 		return
 	}
 	p.Dispatcher.Dispatch(ctx, ev, matches)
-}
-
-// Runner runs a set of pipelines concurrently.
-type Runner struct {
-	Pipelines []*Pipeline
-}
-
-// Run starts every pipeline and blocks until all exit (ctx cancelled + source
-// Run returns).
-func (r *Runner) Run(ctx context.Context) error {
-	var wg sync.WaitGroup
-	for _, p := range r.Pipelines {
-		wg.Add(1)
-		go func(p *Pipeline) {
-			defer wg.Done()
-			if err := p.Run(ctx); err != nil {
-				slog.Error("pipeline: exited with error", "pipeline", p.Name, "error", err)
-			}
-		}(p)
-	}
-	wg.Wait()
-	return nil
 }

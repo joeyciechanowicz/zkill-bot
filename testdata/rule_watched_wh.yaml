@@ -1,0 +1,6 @@
+name: watched-wormhole-exit
+enabled: true
+priority: 10
+when: 'out.system_name in ["J123456", "J234567"]'
+actions:
+  - type: console

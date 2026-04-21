@@ -24,6 +24,7 @@ type Checkpointer interface {
 
 // Config drives the poller.
 type Config struct {
+	Name         string        // configured source name; used for checkpoints and event.Source
 	BaseURL      string        // e.g. https://r2z2.zkillboard.com
 	SequencePath string        // e.g. /ephemeral/sequence.json
 	PollInterval time.Duration // between successful fetches (>=100ms)
@@ -40,6 +41,9 @@ type Source struct {
 
 // New builds a zkill source. The store is used for sequence checkpointing.
 func New(cfg Config, client *http.Client, cp Checkpointer) *Source {
+	if cfg.Name == "" {
+		cfg.Name = "zkill"
+	}
 	if cfg.UserAgent == "" {
 		cfg.UserAgent = "zkill-bot/2.0"
 	}
@@ -55,8 +59,8 @@ func New(cfg Config, client *http.Client, cp Checkpointer) *Source {
 	return &Source{cfg: cfg, client: client, cp: cp}
 }
 
-// Name returns the stable identifier for this source.
-func (s *Source) Name() string { return "zkill" }
+// Name returns the configured identifier for this source instance.
+func (s *Source) Name() string { return s.cfg.Name }
 
 // Run polls R2Z2 and emits events. Returns when ctx is cancelled.
 func (s *Source) Run(ctx context.Context, out chan<- *event.Event) error {
@@ -79,6 +83,7 @@ func (s *Source) Run(ctx context.Context, out chan<- *event.Event) error {
 			if err != nil {
 				slog.Warn("zkill: rejected malformed payload", "sequence", seq, "error", err)
 			} else {
+				ev.Source = s.cfg.Name
 				enrich(ev)
 				select {
 				case out <- ev:
