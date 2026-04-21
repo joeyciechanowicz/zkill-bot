@@ -1,0 +1,132 @@
+{
+  "attacker_count": 1,
+  "attackers": [
+    {
+      "alliance_id": 99003995,
+      "character_id": 96836341,
+      "corporation_id": 98606395,
+      "damage_done": 621,
+      "final_blow": true,
+      "meta_group": "",
+      "meta_level": 0,
+      "security_status": -3.6,
+      "ship_category": "Ship",
+      "ship_group": "Attack Battlecruiser",
+      "ship_group_id": 1201,
+      "ship_name": "Tornado",
+      "ship_type_id": 4310,
+      "weapon_type_id": 9491
+    }
+  ],
+  "final_blow": {
+    "alliance_id": 99003995,
+    "character_id": 96836341,
+    "corporation_id": 98606395,
+    "damage_done": 621,
+    "final_blow": true,
+    "meta_group": "",
+    "meta_level": 0,
+    "security_status": -3.6,
+    "ship_category": "Ship",
+    "ship_group": "Attack Battlecruiser",
+    "ship_group_id": 1201,
+    "ship_name": "Tornado",
+    "ship_type_id": 4310,
+    "weapon_type_id": 9491
+  },
+  "has_capital": false,
+  "hash": "dc4c13997a226d1ade355bbcd4c7f3bde7df9338",
+  "items": [
+    {
+      "flag": 94,
+      "item_type_id": 31117,
+      "name": "Small Cargohold Optimization I",
+      "quantity_destroyed": 1,
+      "quantity_dropped": 0,
+      "singleton": 0
+    },
+    {
+      "flag": 19,
+      "item_type_id": 5973,
+      "name": "5MN Y-T8 Compact Microwarpdrive",
+      "quantity_destroyed": 1,
+      "quantity_dropped": 0,
+      "singleton": 0
+    },
+    {
+      "flag": 93,
+      "item_type_id": 31117,
+      "name": "Small Cargohold Optimization I",
+      "quantity_destroyed": 1,
+      "quantity_dropped": 0,
+      "singleton": 0
+    },
+    {
+      "flag": 5,
+      "item_type_id": 16273,
+      "quantity_destroyed": 40,
+      "quantity_dropped": 0,
+      "singleton": 0
+    },
+    {
+      "flag": 92,
+      "item_type_id": 31117,
+      "name": "Small Cargohold Optimization I",
+      "quantity_destroyed": 1,
+      "quantity_dropped": 0,
+      "singleton": 0
+    },
+    {
+      "flag": 27,
+      "item_type_id": 52694,
+      "name": "Industrial Cynosural Field Generator",
+      "quantity_destroyed": 1,
+      "quantity_dropped": 0,
+      "singleton": 0
+    },
+    {
+      "flag": 11,
+      "item_type_id": 1319,
+      "name": "Expanded Cargohold II",
+      "quantity_destroyed": 0,
+      "quantity_dropped": 1,
+      "singleton": 0
+    }
+  ],
+  "killmail_id": 134903379,
+  "killmail_time": "2026-04-21T10:33:58Z",
+  "sequence_id": 97061330,
+  "solar_system_id": 30001446,
+  "solar_system_name": "Otsasai",
+  "uploaded_at": "2026-04-21T10:34:55Z",
+  "victim": {
+    "alliance_id": 99003581,
+    "character_id": 2122085885,
+    "corporation_id": 98817479,
+    "damage_taken": 621,
+    "ship_category": "Ship",
+    "ship_category_id": 6,
+    "ship_group": "Frigate",
+    "ship_group_id": 25,
+    "ship_name": "Venture",
+    "ship_type_id": 32880
+  },
+  "zkb": {
+    "awox": false,
+    "destroyed_value": 5215062.55,
+    "dropped_value": 294686.67,
+    "fitted_value": 5505806.02,
+    "labels": [
+      "tz:au",
+      "cat:6",
+      "solo",
+      "pvp",
+      "loc:lowsec"
+    ],
+    "location_id": 50009416,
+    "npc": false,
+    "points": 1,
+    "solo": true,
+    "total_value": 5509749.22
+  }
+}

@@ -1,0 +1,331 @@
+{
+  "attacker_count": 2,
+  "attackers": [
+    {
+      "alliance_id": 0,
+      "character_id": 0,
+      "corporation_id": 1000294,
+      "damage_done": 8371,
+      "final_blow": false,
+      "security_status": 0,
+      "ship_type_id": 56150,
+      "weapon_type_id": 0
+    },
+    {
+      "alliance_id": 0,
+      "character_id": 0,
+      "corporation_id": 0,
+      "damage_done": 0,
+      "final_blow": true,
+      "security_status": 0,
+      "ship_type_id": 47438,
+      "weapon_type_id": 0
+    }
+  ],
+  "final_blow": {
+    "alliance_id": 0,
+    "character_id": 0,
+    "corporation_id": 0,
+    "damage_done": 0,
+    "final_blow": true,
+    "security_status": 0,
+    "ship_type_id": 47438,
+    "weapon_type_id": 0
+  },
+  "has_capital": false,
+  "hash": "26e6384e756dc509a4ef7d9c1675c8ab32c08113",
+  "items": [
+    {
+      "flag": 87,
+      "item_type_id": 2466,
+      "name": "Hornet II",
+      "quantity_destroyed": 2,
+      "quantity_dropped": 0,
+      "singleton": 0
+    },
+    {
+      "flag": 87,
+      "item_type_id": 2466,
+      "name": "Hornet II",
+      "quantity_destroyed": 0,
+      "quantity_dropped": 5,
+      "singleton": 0
+    },
+    {
+      "flag": 19,
+      "item_type_id": 12058,
+      "name": "10MN Afterburner II",
+      "quantity_destroyed": 1,
+      "quantity_dropped": 0,
+      "singleton": 0
+    },
+    {
+      "flag": 15,
+      "item_type_id": 1183,
+      "name": "Small Armor Repairer II",
+      "quantity_destroyed": 0,
+      "quantity_dropped": 1,
+      "singleton": 0
+    },
+    {
+      "flag": 5,
+      "item_type_id": 47763,
+      "quantity_destroyed": 2,
+      "quantity_dropped": 0,
+      "singleton": 0
+    },
+    {
+      "flag": 30,
+      "item_type_id": 7707,
+      "name": "Regulated Neutron Phase Cannon I",
+      "quantity_destroyed": 0,
+      "quantity_dropped": 1,
+      "singleton": 0
+    },
+    {
+      "flag": 5,
+      "item_type_id": 47896,
+      "quantity_destroyed": 0,
+      "quantity_dropped": 1,
+      "singleton": 0
+    },
+    {
+      "flag": 93,
+      "item_type_id": 31372,
+      "name": "Medium Capacitor Control Circuit I",
+      "quantity_destroyed": 1,
+      "quantity_dropped": 0,
+      "singleton": 0
+    },
+    {
+      "flag": 5,
+      "item_type_id": 48121,
+      "quantity_destroyed": 0,
+      "quantity_dropped": 11,
+      "singleton": 0
+    },
+    {
+      "flag": 87,
+      "item_type_id": 31874,
+      "name": "Caldari Navy Vespa",
+      "quantity_destroyed": 0,
+      "quantity_dropped": 2,
+      "singleton": 0
+    },
+    {
+      "flag": 11,
+      "item_type_id": 1183,
+      "name": "Small Armor Repairer II",
+      "quantity_destroyed": 0,
+      "quantity_dropped": 1,
+      "singleton": 0
+    },
+    {
+      "flag": 94,
+      "item_type_id": 31372,
+      "name": "Medium Capacitor Control Circuit I",
+      "quantity_destroyed": 1,
+      "quantity_dropped": 0,
+      "singleton": 0
+    },
+    {
+      "flag": 14,
+      "item_type_id": 4405,
+      "name": "Drone Damage Amplifier II",
+      "quantity_destroyed": 1,
+      "quantity_dropped": 0,
+      "singleton": 0
+    },
+    {
+      "flag": 27,
+      "item_type_id": 23025,
+      "name": "Caldari Navy Antimatter Charge M",
+      "quantity_destroyed": 67,
+      "quantity_dropped": 0,
+      "singleton": 0
+    },
+    {
+      "flag": 5,
+      "item_type_id": 47765,
+      "quantity_destroyed": 0,
+      "quantity_dropped": 1,
+      "singleton": 0
+    },
+    {
+      "flag": 12,
+      "item_type_id": 2048,
+      "name": "Damage Control II",
+      "quantity_destroyed": 1,
+      "quantity_dropped": 0,
+      "singleton": 0
+    },
+    {
+      "flag": 28,
+      "item_type_id": 23025,
+      "name": "Caldari Navy Antimatter Charge M",
+      "quantity_destroyed": 0,
+      "quantity_dropped": 67,
+      "singleton": 0
+    },
+    {
+      "flag": 5,
+      "item_type_id": 23025,
+      "name": "Caldari Navy Antimatter Charge M",
+      "quantity_destroyed": 2880,
+      "quantity_dropped": 0,
+      "singleton": 0
+    },
+    {
+      "flag": 28,
+      "item_type_id": 7707,
+      "name": "Regulated Neutron Phase Cannon I",
+      "quantity_destroyed": 1,
+      "quantity_dropped": 0,
+      "singleton": 0
+    },
+    {
+      "flag": 20,
+      "item_type_id": 2032,
+      "name": "Cap Recharger II",
+      "quantity_destroyed": 0,
+      "quantity_dropped": 1,
+      "singleton": 0
+    },
+    {
+      "flag": 21,
+      "item_type_id": 6073,
+      "name": "Medium Compact Pb-Acid Cap Battery",
+      "quantity_destroyed": 0,
+      "quantity_dropped": 1,
+      "singleton": 0
+    },
+    {
+      "flag": 27,
+      "item_type_id": 7707,
+      "name": "Regulated Neutron Phase Cannon I",
+      "quantity_destroyed": 0,
+      "quantity_dropped": 1,
+      "singleton": 0
+    },
+    {
+      "flag": 5,
+      "item_type_id": 28668,
+      "name": "Nanite Repair Paste",
+      "quantity_destroyed": 100,
+      "quantity_dropped": 0,
+      "singleton": 0
+    },
+    {
+      "flag": 5,
+      "item_type_id": 47900,
+      "quantity_destroyed": 1,
+      "quantity_dropped": 0,
+      "singleton": 0
+    },
+    {
+      "flag": 13,
+      "item_type_id": 4405,
+      "name": "Drone Damage Amplifier II",
+      "quantity_destroyed": 1,
+      "quantity_dropped": 0,
+      "singleton": 0
+    },
+    {
+      "flag": 5,
+      "item_type_id": 47892,
+      "quantity_destroyed": 1,
+      "quantity_dropped": 0,
+      "singleton": 0
+    },
+    {
+      "flag": 92,
+      "item_type_id": 31372,
+      "name": "Medium Capacitor Control Circuit I",
+      "quantity_destroyed": 1,
+      "quantity_dropped": 0,
+      "singleton": 0
+    },
+    {
+      "flag": 5,
+      "item_type_id": 48112,
+      "quantity_destroyed": 6,
+      "quantity_dropped": 0,
+      "singleton": 0
+    },
+    {
+      "flag": 5,
+      "item_type_id": 48472,
+      "quantity_destroyed": 1,
+      "quantity_dropped": 0,
+      "singleton": 2
+    },
+    {
+      "flag": 30,
+      "item_type_id": 23025,
+      "name": "Caldari Navy Antimatter Charge M",
+      "quantity_destroyed": 0,
+      "quantity_dropped": 67,
+      "singleton": 0
+    },
+    {
+      "flag": 22,
+      "item_type_id": 23533,
+      "name": "Omnidirectional Tracking Link I",
+      "quantity_destroyed": 0,
+      "quantity_dropped": 1,
+      "singleton": 0
+    },
+    {
+      "flag": 29,
+      "item_type_id": 23527,
+      "name": "Drone Link Augmentor I",
+      "quantity_destroyed": 0,
+      "quantity_dropped": 1,
+      "singleton": 0
+    },
+    {
+      "flag": 22,
+      "item_type_id": 29001,
+      "name": "Tracking Speed Script",
+      "quantity_destroyed": 1,
+      "quantity_dropped": 0,
+      "singleton": 0
+    }
+  ],
+  "killmail_id": 134903387,
+  "killmail_time": "2026-04-21T10:34:57Z",
+  "sequence_id": 97061335,
+  "solar_system_id": 32000151,
+  "solar_system_name": "AD151",
+  "uploaded_at": "2026-04-21T10:37:09Z",
+  "victim": {
+    "alliance_id": 0,
+    "character_id": 2123584782,
+    "corporation_id": 98829820,
+    "damage_taken": 8371,
+    "ship_category": "Ship",
+    "ship_category_id": 6,
+    "ship_group": "Cruiser",
+    "ship_group_id": 26,
+    "ship_name": "Vexor",
+    "ship_type_id": 626
+  },
+  "zkb": {
+    "awox": false,
+    "destroyed_value": 23993524.52,
+    "dropped_value": 8269498.12,
+    "fitted_value": 20514418.43,
+    "labels": [
+      "tz:au",
+      "cat:6",
+      "#:2+",
+      "npc",
+      "loc:abyssal"
+    ],
+    "location_id": 0,
+    "npc": true,
+    "points": 1,
+    "solo": false,
+    "total_value": 32263022.64
+  }
+}

@@ -1,0 +1,500 @@
+{
+  "attacker_count": 2,
+  "attackers": [
+    {
+      "alliance_id": 99003581,
+      "character_id": 2115866941,
+      "corporation_id": 98817479,
+      "damage_done": 1371,
+      "final_blow": false,
+      "meta_group": "",
+      "meta_level": 4,
+      "security_status": -5.6,
+      "ship_category": "Ship",
+      "ship_group": "Battleship",
+      "ship_group_id": 27,
+      "ship_name": "Praxis",
+      "ship_type_id": 47466,
+      "weapon_type_id": 47466
+    },
+    {
+      "alliance_id": 99003581,
+      "character_id": 2123959122,
+      "corporation_id": 98817479,
+      "damage_done": 1201,
+      "final_blow": true,
+      "meta_group": "",
+      "meta_level": 4,
+      "security_status": 1.8,
+      "ship_category": "Ship",
+      "ship_group": "Battleship",
+      "ship_group_id": 27,
+      "ship_name": "Praxis",
+      "ship_type_id": 47466,
+      "weapon_type_id": 3995
+    }
+  ],
+  "final_blow": {
+    "alliance_id": 99003581,
+    "character_id": 2123959122,
+    "corporation_id": 98817479,
+    "damage_done": 1201,
+    "final_blow": true,
+    "meta_group": "",
+    "meta_level": 4,
+    "security_status": 1.8,
+    "ship_category": "Ship",
+    "ship_group": "Battleship",
+    "ship_group_id": 27,
+    "ship_name": "Praxis",
+    "ship_type_id": 47466,
+    "weapon_type_id": 3995
+  },
+  "has_capital": false,
+  "hash": "c5beda3e7eb3b1c1e60eabc865a2a63a0586258d",
+  "items": [
+    {
+      "flag": 11,
+      "item_type_id": 22291,
+      "name": "Ballistic Control System II",
+      "quantity_destroyed": 0,
+      "quantity_dropped": 1,
+      "singleton": 0
+    },
+    {
+      "flag": 27,
+      "item_type_id": 2404,
+      "name": "Light Missile Launcher II",
+      "quantity_destroyed": 0,
+      "quantity_dropped": 1,
+      "singleton": 0
+    },
+    {
+      "flag": 5,
+      "item_type_id": 21328,
+      "name": "Guristas Thorium Charge S",
+      "quantity_destroyed": 0,
+      "quantity_dropped": 1000,
+      "singleton": 0
+    },
+    {
+      "flag": 30,
+      "item_type_id": 2404,
+      "name": "Light Missile Launcher II",
+      "quantity_destroyed": 1,
+      "quantity_dropped": 0,
+      "singleton": 0
+    },
+    {
+      "flag": 5,
+      "item_type_id": 5973,
+      "name": "5MN Y-T8 Compact Microwarpdrive",
+      "quantity_destroyed": 1,
+      "quantity_dropped": 0,
+      "singleton": 0
+    },
+    {
+      "flag": 32,
+      "item_type_id": 17938,
+      "name": "Core Probe Launcher I",
+      "quantity_destroyed": 0,
+      "quantity_dropped": 1,
+      "singleton": 0
+    },
+    {
+      "flag": 5,
+      "item_type_id": 10694,
+      "name": "125mm Prototype Gauss Gun",
+      "quantity_destroyed": 1,
+      "quantity_dropped": 0,
+      "singleton": 0
+    },
+    {
+      "flag": 5,
+      "item_type_id": 19400,
+      "quantity_destroyed": 4,
+      "quantity_dropped": 0,
+      "singleton": 0
+    },
+    {
+      "flag": 93,
+      "item_type_id": 31592,
+      "name": "Small Bay Loading Accelerator II",
+      "quantity_destroyed": 1,
+      "quantity_dropped": 0,
+      "singleton": 0
+    },
+    {
+      "flag": 5,
+      "item_type_id": 54291,
+      "name": "Enduring Multispectrum Shield Hardener",
+      "quantity_destroyed": 1,
+      "quantity_dropped": 0,
+      "singleton": 0
+    },
+    {
+      "flag": 5,
+      "item_type_id": 9632,
+      "name": "Compact Multispectrum Shield Hardener",
+      "quantity_destroyed": 0,
+      "quantity_dropped": 1,
+      "singleton": 0
+    },
+    {
+      "flag": 29,
+      "item_type_id": 2404,
+      "name": "Light Missile Launcher II",
+      "quantity_destroyed": 0,
+      "quantity_dropped": 1,
+      "singleton": 0
+    },
+    {
+      "flag": 5,
+      "item_type_id": 19407,
+      "quantity_destroyed": 1,
+      "quantity_dropped": 0,
+      "singleton": 0
+    },
+    {
+      "flag": 22,
+      "item_type_id": 2032,
+      "name": "Cap Recharger II",
+      "quantity_destroyed": 1,
+      "quantity_dropped": 0,
+      "singleton": 0
+    },
+    {
+      "flag": 5,
+      "item_type_id": 30488,
+      "name": "Sisters Core Scanner Probe",
+      "quantity_destroyed": 0,
+      "quantity_dropped": 8,
+      "singleton": 0
+    },
+    {
+      "flag": 29,
+      "item_type_id": 24499,
+      "name": "Inferno Fury Light Missile",
+      "quantity_destroyed": 0,
+      "quantity_dropped": 53,
+      "singleton": 0
+    },
+    {
+      "flag": 21,
+      "item_type_id": 19181,
+      "name": "Gistum C-Type Medium Shield Booster",
+      "quantity_destroyed": 1,
+      "quantity_dropped": 0,
+      "singleton": 0
+    },
+    {
+      "flag": 23,
+      "item_type_id": 19274,
+      "name": "Pith A-Type Kinetic Shield Hardener",
+      "quantity_destroyed": 0,
+      "quantity_dropped": 1,
+      "singleton": 0
+    },
+    {
+      "flag": 5,
+      "item_type_id": 27367,
+      "name": "Guristas Inferno Light Missile",
+      "quantity_destroyed": 1000,
+      "quantity_dropped": 0,
+      "singleton": 0
+    },
+    {
+      "flag": 5,
+      "item_type_id": 9580,
+      "name": "Compact EM Shield Amplifier",
+      "quantity_destroyed": 0,
+      "quantity_dropped": 1,
+      "singleton": 0
+    },
+    {
+      "flag": 5,
+      "item_type_id": 12543,
+      "quantity_destroyed": 0,
+      "quantity_dropped": 1,
+      "singleton": 0
+    },
+    {
+      "flag": 5,
+      "item_type_id": 21320,
+      "name": "Guristas Iron Charge S",
+      "quantity_destroyed": 1000,
+      "quantity_dropped": 0,
+      "singleton": 0
+    },
+    {
+      "flag": 5,
+      "item_type_id": 17243,
+      "quantity_destroyed": 3,
+      "quantity_dropped": 0,
+      "singleton": 0
+    },
+    {
+      "flag": 28,
+      "item_type_id": 2404,
+      "name": "Light Missile Launcher II",
+      "quantity_destroyed": 0,
+      "quantity_dropped": 1,
+      "singleton": 0
+    },
+    {
+      "flag": 92,
+      "item_type_id": 31716,
+      "name": "Small EM Shield Reinforcer I",
+      "quantity_destroyed": 1,
+      "quantity_dropped": 0,
+      "singleton": 0
+    },
+    {
+      "flag": 5,
+      "item_type_id": 27379,
+      "name": "Guristas Nova Light Missile",
+      "quantity_destroyed": 1000,
+      "quantity_dropped": 0,
+      "singleton": 0
+    },
+    {
+      "flag": 5,
+      "item_type_id": 4349,
+      "name": "Pithum C-Type Multispectrum Shield Hardener",
+      "quantity_destroyed": 0,
+      "quantity_dropped": 1,
+      "singleton": 0
+    },
+    {
+      "flag": 5,
+      "item_type_id": 24495,
+      "name": "Scourge Fury Light Missile",
+      "quantity_destroyed": 0,
+      "quantity_dropped": 7114,
+      "singleton": 0
+    },
+    {
+      "flag": 5,
+      "item_type_id": 28362,
+      "quantity_destroyed": 0,
+      "quantity_dropped": 23,
+      "singleton": 0
+    },
+    {
+      "flag": 5,
+      "item_type_id": 27353,
+      "name": "Guristas Scourge Light Missile",
+      "quantity_destroyed": 1000,
+      "quantity_dropped": 0,
+      "singleton": 0
+    },
+    {
+      "flag": 28,
+      "item_type_id": 24499,
+      "name": "Inferno Fury Light Missile",
+      "quantity_destroyed": 53,
+      "quantity_dropped": 0,
+      "singleton": 0
+    },
+    {
+      "flag": 5,
+      "item_type_id": 17251,
+      "quantity_destroyed": 2,
+      "quantity_dropped": 0,
+      "singleton": 0
+    },
+    {
+      "flag": 20,
+      "item_type_id": 2032,
+      "name": "Cap Recharger II",
+      "quantity_destroyed": 1,
+      "quantity_dropped": 0,
+      "singleton": 0
+    },
+    {
+      "flag": 27,
+      "item_type_id": 24499,
+      "name": "Inferno Fury Light Missile",
+      "quantity_destroyed": 0,
+      "quantity_dropped": 53,
+      "singleton": 0
+    },
+    {
+      "flag": 5,
+      "item_type_id": 14035,
+      "name": "Dread Guristas Thermal Shield Amplifier",
+      "quantity_destroyed": 0,
+      "quantity_dropped": 1,
+      "singleton": 0
+    },
+    {
+      "flag": 5,
+      "item_type_id": 81349,
+      "quantity_destroyed": 0,
+      "quantity_dropped": 61,
+      "singleton": 0
+    },
+    {
+      "flag": 13,
+      "item_type_id": 22291,
+      "name": "Ballistic Control System II",
+      "quantity_destroyed": 1,
+      "quantity_dropped": 0,
+      "singleton": 0
+    },
+    {
+      "flag": 5,
+      "item_type_id": 27313,
+      "name": "Guristas Inferno Rocket",
+      "quantity_destroyed": 2000,
+      "quantity_dropped": 0,
+      "singleton": 0
+    },
+    {
+      "flag": 5,
+      "item_type_id": 35658,
+      "name": "5MN Quad LiF Restrained Microwarpdrive",
+      "quantity_destroyed": 0,
+      "quantity_dropped": 1,
+      "singleton": 0
+    },
+    {
+      "flag": 5,
+      "item_type_id": 28361,
+      "quantity_destroyed": 112,
+      "quantity_dropped": 0,
+      "singleton": 0
+    },
+    {
+      "flag": 31,
+      "item_type_id": 2404,
+      "name": "Light Missile Launcher II",
+      "quantity_destroyed": 0,
+      "quantity_dropped": 1,
+      "singleton": 0
+    },
+    {
+      "flag": 5,
+      "item_type_id": 19406,
+      "quantity_destroyed": 0,
+      "quantity_dropped": 1,
+      "singleton": 0
+    },
+    {
+      "flag": 31,
+      "item_type_id": 24499,
+      "name": "Inferno Fury Light Missile",
+      "quantity_destroyed": 53,
+      "quantity_dropped": 0,
+      "singleton": 0
+    },
+    {
+      "flag": 5,
+      "item_type_id": 21384,
+      "name": "Dread Guristas Iron Charge S",
+      "quantity_destroyed": 0,
+      "quantity_dropped": 1000,
+      "singleton": 0
+    },
+    {
+      "flag": 19,
+      "item_type_id": 6001,
+      "name": "1MN Y-S8 Compact Afterburner",
+      "quantity_destroyed": 1,
+      "quantity_dropped": 0,
+      "singleton": 0
+    },
+    {
+      "flag": 12,
+      "item_type_id": 22291,
+      "name": "Ballistic Control System II",
+      "quantity_destroyed": 1,
+      "quantity_dropped": 0,
+      "singleton": 0
+    },
+    {
+      "flag": 5,
+      "item_type_id": 24499,
+      "name": "Inferno Fury Light Missile",
+      "quantity_destroyed": 0,
+      "quantity_dropped": 1215,
+      "singleton": 0
+    },
+    {
+      "flag": 5,
+      "item_type_id": 1810,
+      "name": "Scourge Auto-Targeting Light Missile I",
+      "quantity_destroyed": 11260,
+      "quantity_dropped": 0,
+      "singleton": 0
+    },
+    {
+      "flag": 30,
+      "item_type_id": 24499,
+      "name": "Inferno Fury Light Missile",
+      "quantity_destroyed": 53,
+      "quantity_dropped": 0,
+      "singleton": 0
+    },
+    {
+      "flag": 32,
+      "item_type_id": 30488,
+      "name": "Sisters Core Scanner Probe",
+      "quantity_destroyed": 8,
+      "quantity_dropped": 0,
+      "singleton": 0
+    },
+    {
+      "flag": 94,
+      "item_type_id": 31153,
+      "name": "Small Low Friction Nozzle Joints I",
+      "quantity_destroyed": 1,
+      "quantity_dropped": 0,
+      "singleton": 0
+    },
+    {
+      "flag": 5,
+      "item_type_id": 8521,
+      "name": "Small F-S9 Regolith Compact Shield Extender",
+      "quantity_destroyed": 0,
+      "quantity_dropped": 1,
+      "singleton": 0
+    }
+  ],
+  "killmail_id": 134903455,
+  "killmail_time": "2026-04-21T10:47:59Z",
+  "sequence_id": 97061374,
+  "solar_system_id": 30000204,
+  "solar_system_name": "Ohkunen",
+  "uploaded_at": "2026-04-21T10:50:11Z",
+  "victim": {
+    "alliance_id": 0,
+    "character_id": 2113235374,
+    "corporation_id": 98808912,
+    "damage_taken": 2572,
+    "ship_category": "Ship",
+    "ship_category_id": 6,
+    "ship_group": "Tactical Destroyer",
+    "ship_group_id": 1305,
+    "ship_name": "Jackdaw",
+    "ship_type_id": 34828
+  },
+  "zkb": {
+    "awox": false,
+    "destroyed_value": 202368446.13,
+    "dropped_value": 396088886.48,
+    "fitted_value": 215709197.78,
+    "labels": [
+      "tz:au",
+      "cat:6",
+      "#:2+",
+      "pvp",
+      "loc:lowsec"
+    ],
+    "location_id": 50012927,
+    "npc": false,
+    "points": 8,
+    "solo": false,
+    "total_value": 598457332.61
+  }
+}

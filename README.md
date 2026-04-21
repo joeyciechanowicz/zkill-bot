@@ -1,186 +1,79 @@
 # zkill-bot
 
-An EVE Online killmail monitor. It watches the [zKillboard](https://zkillboard.com) live feed, matches incoming kills against your rules, and posts notifications to Discord.
+A generic event-processing engine. Out of the box it ingests the
+[zKillboard](https://zkillboard.com) live killmail feed, but every stage of
+the pipeline is pluggable:
+
+```
+┌────────┐   ┌──────────┐   ┌───────┐   ┌─────────┐
+│ Source ├──▶│ Enrichers├──▶│ Rules ├──▶│ Actions │
+└────────┘   └──────────┘   └───────┘   └─────────┘
+                                            │
+                                            ▼
+                                   ┌────────────────┐
+                                   │  SQLite facts  │
+                                   │  (for later    │
+                                   │   enrichment)  │
+                                   └────────────────┘
+```
+
+- **Sources** produce `Event`s. Killmails, wormhole-connection updates, ESI
+  polling, and Discord slash-commands are all just sources.
+- **Enrichers** mutate `Event.Fields` — SDE lookups, fact lookups from the
+  store, anything a rule might want to read.
+- **Rules** are YAML-declarative; the `when:` clause is an
+  [expr-lang](https://github.com/expr-lang/expr) boolean expression compiled
+  at startup.
+- **Actions** are the side effects — console, webhook, fact-store writes,
+  Discord replies — with idempotency and retry built in.
+
+See [RULES.md](RULES.md) for the rule language and [spec.md](spec.md) for the
+full design.
 
 ---
+
+## Quick start
+
+```sh
+go build -o zkill-bot ./cmd/zkill-bot
+./zkill-bot                       # uses ./config.yaml
+./zkill-bot -config /my/cfg.yaml
+```
+
+`Ctrl+C` stops the bot; checkpoints are persisted to SQLite (`zkill-bot.db`)
+so it resumes where it left off.
+
+## Tests
+
+```sh
+go test ./...
+```
+
+## Updating static game data
+
+Ship names, item names, and solar-system names are compiled into the binary.
+Rebuild them when CCP ships new content:
+
+```sh
+go run ./cmd/gen-sde         # from ./eve.db
+go run ./cmd/gen-systems     # from ESI
+go build -o zkill-bot ./cmd/zkill-bot
+```
+
+## Adding a new source
+
+1. Create `internal/source/<name>/` with a `Source` implementing
+   [`source.Source`](internal/source/source.go) — `Name()` and `Run(ctx, out)`.
+2. Normalize payloads into `event.Event` with `Fields` as nested
+   `map[string]any` so rules can address nested values with dots
+   (`zkb.total_value`).
+3. Register it in `cmd/zkill-bot/main.go` under `buildSource`.
+4. Wire it up in `config.yaml` as a new `pipelines:` entry.
+
+Stubs for `whapi`, `esi`, and `discord` show the shape.
 
 ## Requirements
 
-- [Go](https://go.dev) 1.25 or newer
-- A `config.yaml` file — a ready-to-edit example is included
-
----
-
-## 1. Install Go
-
-### macOS
-
-The easiest way is with [Homebrew](https://brew.sh). If you don't have Homebrew, install it first by pasting this into Terminal:
-
-```
-/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
-```
-
-Then install Go:
-
-```
-brew install go
-```
-
-### Windows
-
-1. Go to [go.dev/dl](https://go.dev/dl/)
-2. Download the `.msi` installer for the latest version
-3. Run it and follow the prompts
-4. Open a new Command Prompt and verify it worked:
-
-```
-go version
-```
-
-### Linux
-
-```
-sudo apt install golang-go        # Debian / Ubuntu
-sudo dnf install golang           # Fedora / RHEL
-```
-
-Or download directly from [go.dev/dl](https://go.dev/dl/) if your package manager has an older version.
-
----
-
-## 2. Get the code
-
-If you have Git installed:
-
-```
-git clone https://github.com/yourname/zkill-bot.git
-cd zkill-bot
-```
-
-Or download and extract the zip from GitHub, then open a terminal in the extracted folder.
-
----
-
-## 3. Configure
-
-Open `config.yaml` in any text editor. The settings you'll most likely want to change are:
-
-| Setting | What it does |
-|---|---|
-| `alert_webhook_url` | Discord webhook for startup/shutdown notifications |
-| `rules` → `rules` | Your kill notification rules |
-
-For help writing rules, see [RULES.md](RULES.md).
-
----
-
-## 4. Build
-
-From inside the project folder, run:
-
-```
-go build -o zkill-bot .
-```
-
-This creates a single executable file called `zkill-bot` (or `zkill-bot.exe` on Windows) in the current directory. You only need to rebuild when you update the code.
-
----
-
-## 5. Run
-
-```
-./zkill-bot
-```
-
-On Windows:
-
-```
-zkill-bot.exe
-```
-
-The bot will start polling the live zKillboard feed immediately. You should see kill notifications printed to the terminal within a few seconds.
-
-### Using a different config file
-
-By default the bot looks for `config.yaml` in the same directory. To use a file somewhere else:
-
-```
-./zkill-bot -config /path/to/my-config.yaml
-```
-
-### Stopping
-
-Press `Ctrl+C`. The bot saves its position in the feed before exiting, so it will resume from where it left off next time.
-
----
-
-## 6. Keeping it running
-
-If you want the bot to run continuously in the background, the simplest options are:
-
-### macOS / Linux — screen
-
-```
-screen -S zkill-bot
-./zkill-bot
-```
-
-Detach with `Ctrl+A` then `D`. Reattach later with `screen -r zkill-bot`.
-
-### macOS / Linux — nohup
-
-```
-nohup ./zkill-bot > zkill-bot.log 2>&1 &
-```
-
-Logs go to `zkill-bot.log`. Find the process with `ps aux | grep zkill-bot`.
-
-### Linux — systemd
-
-Create `/etc/systemd/system/zkill-bot.service`:
-
-```ini
-[Unit]
-Description=zkill-bot
-After=network.target
-
-[Service]
-Type=simple
-WorkingDirectory=/path/to/zkill-bot
-ExecStart=/path/to/zkill-bot/zkill-bot
-Restart=on-failure
-
-[Install]
-WantedBy=multi-user.target
-```
-
-Then enable and start it:
-
-```
-sudo systemctl enable zkill-bot
-sudo systemctl start zkill-bot
-sudo journalctl -u zkill-bot -f   # view logs
-```
-
----
-
-## Updating game data
-
-All ship names, item names, and solar system names are compiled directly into the binary — no database file is needed at runtime. If CCP releases a patch that adds new items or systems, regenerate the data and rebuild:
-
-```
-go run ./cmd/gen-sde              # ship and item names from eve.db
-go run ./cmd/gen-systems          # solar system names from ESI
-go build -o zkill-bot .
-```
-
-`eve.db` is only needed to run these generators, not to run the bot itself.
-
----
-
-## Running the tests
-
-```
-go test ./...
-```
+- Go 1.25+
+- No CGO — uses `modernc.org/sqlite`, so cross-compiling a single binary
+  "just works".

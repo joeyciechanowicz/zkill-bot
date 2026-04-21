@@ -1,0 +1,523 @@
+{
+  "attacker_count": 5,
+  "attackers": [
+    {
+      "alliance_id": 99013690,
+      "character_id": 2121448918,
+      "corporation_id": 98788012,
+      "damage_done": 1973395,
+      "final_blow": true,
+      "meta_group": "",
+      "meta_level": 0,
+      "security_status": 0,
+      "ship_category": "Ship",
+      "ship_group": "Dreadnought",
+      "ship_group_id": 485,
+      "ship_name": "Zirnitra",
+      "ship_type_id": 52907,
+      "weapon_type_id": 92514
+    },
+    {
+      "alliance_id": 99013690,
+      "character_id": 2114600859,
+      "corporation_id": 98788012,
+      "damage_done": 34884,
+      "final_blow": false,
+      "meta_group": "Tech II",
+      "meta_level": 5,
+      "security_status": 0.2,
+      "ship_category": "Ship",
+      "ship_group": "Interdictor",
+      "ship_group_id": 541,
+      "ship_name": "Eris",
+      "ship_type_id": 22460,
+      "weapon_type_id": 22460
+    },
+    {
+      "alliance_id": 99013690,
+      "character_id": 2119369682,
+      "corporation_id": 98788012,
+      "damage_done": 0,
+      "final_blow": false,
+      "meta_group": "Tech II",
+      "meta_level": 5,
+      "security_status": -0.8,
+      "ship_category": "Ship",
+      "ship_group": "Interdictor",
+      "ship_group_id": 541,
+      "ship_name": "Sabre",
+      "ship_type_id": 22456,
+      "weapon_type_id": 4027
+    },
+    {
+      "alliance_id": 99013690,
+      "character_id": 2121758856,
+      "corporation_id": 98788012,
+      "damage_done": 0,
+      "final_blow": false,
+      "meta_group": "Tech II",
+      "meta_level": 5,
+      "security_status": -0.4,
+      "ship_category": "Ship",
+      "ship_group": "Interdictor",
+      "ship_group_id": 541,
+      "ship_name": "Flycatcher",
+      "ship_type_id": 22464,
+      "weapon_type_id": 5445
+    },
+    {
+      "alliance_id": 0,
+      "character_id": 2121812870,
+      "corporation_id": 1000045,
+      "damage_done": 0,
+      "final_blow": false,
+      "meta_group": "Tech II",
+      "meta_level": 5,
+      "security_status": 0,
+      "ship_category": "Ship",
+      "ship_group": "Interdictor",
+      "ship_group_id": 541,
+      "ship_name": "Heretic",
+      "ship_type_id": 22452,
+      "weapon_type_id": 448
+    }
+  ],
+  "final_blow": {
+    "alliance_id": 99013690,
+    "character_id": 2121448918,
+    "corporation_id": 98788012,
+    "damage_done": 1973395,
+    "final_blow": true,
+    "meta_group": "",
+    "meta_level": 0,
+    "security_status": 0,
+    "ship_category": "Ship",
+    "ship_group": "Dreadnought",
+    "ship_group_id": 485,
+    "ship_name": "Zirnitra",
+    "ship_type_id": 52907,
+    "weapon_type_id": 92514
+  },
+  "has_capital": true,
+  "hash": "108251ac93361d8e09918722eb9db1abefee37e9",
+  "items": [
+    {
+      "flag": 5,
+      "item_type_id": 90685,
+      "name": "Wightstorm Rapture Booster IV",
+      "quantity_destroyed": 1,
+      "quantity_dropped": 0,
+      "singleton": 0
+    },
+    {
+      "flag": 28,
+      "item_type_id": 24521,
+      "name": "Scourge Rage Torpedo",
+      "quantity_destroyed": 30,
+      "quantity_dropped": 0,
+      "singleton": 0
+    },
+    {
+      "flag": 5,
+      "item_type_id": 33474,
+      "quantity_destroyed": 1,
+      "quantity_dropped": 0,
+      "singleton": 0
+    },
+    {
+      "flag": 5,
+      "item_type_id": 15955,
+      "name": "Federation Navy Large Plasma Smartbomb",
+      "quantity_destroyed": 1,
+      "quantity_dropped": 0,
+      "singleton": 0
+    },
+    {
+      "flag": 19,
+      "item_type_id": 41508,
+      "name": "True Sansha Capital Shield Booster",
+      "quantity_destroyed": 1,
+      "quantity_dropped": 0,
+      "singleton": 0
+    },
+    {
+      "flag": 13,
+      "item_type_id": 40351,
+      "name": "25000mm Steel Plates II",
+      "quantity_destroyed": 0,
+      "quantity_dropped": 1,
+      "singleton": 0
+    },
+    {
+      "flag": 15,
+      "item_type_id": 1355,
+      "name": "Reactor Control Unit II",
+      "quantity_destroyed": 1,
+      "quantity_dropped": 0,
+      "singleton": 0
+    },
+    {
+      "flag": 133,
+      "item_type_id": 16275,
+      "quantity_destroyed": 0,
+      "quantity_dropped": 1125,
+      "singleton": 0
+    },
+    {
+      "flag": 28,
+      "item_type_id": 37292,
+      "name": "Rapid Torpedo Launcher II",
+      "quantity_destroyed": 0,
+      "quantity_dropped": 1,
+      "singleton": 0
+    },
+    {
+      "flag": 94,
+      "item_type_id": 31374,
+      "name": "Capital Capacitor Control Circuit I",
+      "quantity_destroyed": 1,
+      "quantity_dropped": 0,
+      "singleton": 0
+    },
+    {
+      "flag": 25,
+      "item_type_id": 2032,
+      "name": "Cap Recharger II",
+      "quantity_destroyed": 0,
+      "quantity_dropped": 1,
+      "singleton": 0
+    },
+    {
+      "flag": 92,
+      "item_type_id": 31380,
+      "name": "Capital Capacitor Control Circuit II",
+      "quantity_destroyed": 1,
+      "quantity_dropped": 0,
+      "singleton": 0
+    },
+    {
+      "flag": 20,
+      "item_type_id": 4347,
+      "name": "Pithum A-Type Multispectrum Shield Hardener",
+      "quantity_destroyed": 0,
+      "quantity_dropped": 1,
+      "singleton": 0
+    },
+    {
+      "flag": 5,
+      "item_type_id": 33475,
+      "quantity_destroyed": 2,
+      "quantity_dropped": 0,
+      "singleton": 0
+    },
+    {
+      "flag": 27,
+      "item_type_id": 37292,
+      "name": "Rapid Torpedo Launcher II",
+      "quantity_destroyed": 0,
+      "quantity_dropped": 1,
+      "singleton": 0
+    },
+    {
+      "flag": 11,
+      "item_type_id": 40351,
+      "name": "25000mm Steel Plates II",
+      "quantity_destroyed": 0,
+      "quantity_dropped": 1,
+      "singleton": 0
+    },
+    {
+      "flag": 5,
+      "item_type_id": 31944,
+      "name": "Republic Fleet Target Painter",
+      "quantity_destroyed": 1,
+      "quantity_dropped": 0,
+      "singleton": 0
+    },
+    {
+      "flag": 133,
+      "item_type_id": 17888,
+      "quantity_destroyed": 0,
+      "quantity_dropped": 4204,
+      "singleton": 0
+    },
+    {
+      "flag": 5,
+      "item_type_id": 48115,
+      "name": "Agency 'Pyrolancea' DB9 Dose IV",
+      "quantity_destroyed": 0,
+      "quantity_dropped": 1,
+      "singleton": 0
+    },
+    {
+      "flag": 5,
+      "item_type_id": 35794,
+      "name": "Missile Range Script",
+      "quantity_destroyed": 2,
+      "quantity_dropped": 0,
+      "singleton": 0
+    },
+    {
+      "flag": 5,
+      "item_type_id": 35794,
+      "name": "Missile Range Script",
+      "quantity_destroyed": 0,
+      "quantity_dropped": 1,
+      "singleton": 0
+    },
+    {
+      "flag": 5,
+      "item_type_id": 36911,
+      "name": "Antipharmakon Toxot",
+      "quantity_destroyed": 0,
+      "quantity_dropped": 1,
+      "singleton": 0
+    },
+    {
+      "flag": 14,
+      "item_type_id": 1355,
+      "name": "Reactor Control Unit II",
+      "quantity_destroyed": 0,
+      "quantity_dropped": 1,
+      "singleton": 0
+    },
+    {
+      "flag": 31,
+      "item_type_id": 11577,
+      "name": "Improved Cloaking Device II",
+      "quantity_destroyed": 1,
+      "quantity_dropped": 0,
+      "singleton": 0
+    },
+    {
+      "flag": 29,
+      "item_type_id": 37292,
+      "name": "Rapid Torpedo Launcher II",
+      "quantity_destroyed": 0,
+      "quantity_dropped": 1,
+      "singleton": 0
+    },
+    {
+      "flag": 26,
+      "item_type_id": 41486,
+      "name": "Capital Cap Battery II",
+      "quantity_destroyed": 1,
+      "quantity_dropped": 0,
+      "singleton": 0
+    },
+    {
+      "flag": 5,
+      "item_type_id": 1248,
+      "name": "Capacitor Flux Coil II",
+      "quantity_destroyed": 1,
+      "quantity_dropped": 0,
+      "singleton": 0
+    },
+    {
+      "flag": 5,
+      "item_type_id": 1248,
+      "name": "Capacitor Flux Coil II",
+      "quantity_destroyed": 0,
+      "quantity_dropped": 2,
+      "singleton": 0
+    },
+    {
+      "flag": 93,
+      "item_type_id": 31380,
+      "name": "Capital Capacitor Control Circuit II",
+      "quantity_destroyed": 1,
+      "quantity_dropped": 0,
+      "singleton": 0
+    },
+    {
+      "flag": 23,
+      "item_type_id": 2281,
+      "name": "Multispectrum Shield Hardener II",
+      "quantity_destroyed": 1,
+      "quantity_dropped": 0,
+      "singleton": 0
+    },
+    {
+      "flag": 5,
+      "item_type_id": 35795,
+      "name": "Missile Precision Script",
+      "quantity_destroyed": 0,
+      "quantity_dropped": 3,
+      "singleton": 0
+    },
+    {
+      "flag": 5,
+      "item_type_id": 90693,
+      "name": "Wightstorm Sunyata Booster IV",
+      "quantity_destroyed": 1,
+      "quantity_dropped": 0,
+      "singleton": 0
+    },
+    {
+      "flag": 5,
+      "item_type_id": 28668,
+      "name": "Nanite Repair Paste",
+      "quantity_destroyed": 6072,
+      "quantity_dropped": 0,
+      "singleton": 0
+    },
+    {
+      "flag": 29,
+      "item_type_id": 24521,
+      "name": "Scourge Rage Torpedo",
+      "quantity_destroyed": 0,
+      "quantity_dropped": 30,
+      "singleton": 0
+    },
+    {
+      "flag": 22,
+      "item_type_id": 2281,
+      "name": "Multispectrum Shield Hardener II",
+      "quantity_destroyed": 1,
+      "quantity_dropped": 0,
+      "singleton": 0
+    },
+    {
+      "flag": 21,
+      "item_type_id": 4347,
+      "name": "Pithum A-Type Multispectrum Shield Hardener",
+      "quantity_destroyed": 1,
+      "quantity_dropped": 0,
+      "singleton": 0
+    },
+    {
+      "flag": 30,
+      "item_type_id": 4292,
+      "name": "Siege Module II",
+      "quantity_destroyed": 0,
+      "quantity_dropped": 1,
+      "singleton": 0
+    },
+    {
+      "flag": 5,
+      "item_type_id": 41058,
+      "name": "Shadow Serpentis Heavy Stasis Grappler",
+      "quantity_destroyed": 0,
+      "quantity_dropped": 1,
+      "singleton": 0
+    },
+    {
+      "flag": 12,
+      "item_type_id": 40351,
+      "name": "25000mm Steel Plates II",
+      "quantity_destroyed": 1,
+      "quantity_dropped": 0,
+      "singleton": 0
+    },
+    {
+      "flag": 5,
+      "item_type_id": 15683,
+      "name": "Republic Fleet Ballistic Control System",
+      "quantity_destroyed": 4,
+      "quantity_dropped": 0,
+      "singleton": 0
+    },
+    {
+      "flag": 5,
+      "item_type_id": 35790,
+      "name": "Missile Guidance Computer II",
+      "quantity_destroyed": 1,
+      "quantity_dropped": 0,
+      "singleton": 0
+    },
+    {
+      "flag": 5,
+      "item_type_id": 35790,
+      "name": "Missile Guidance Computer II",
+      "quantity_destroyed": 0,
+      "quantity_dropped": 2,
+      "singleton": 0
+    },
+    {
+      "flag": 5,
+      "item_type_id": 24529,
+      "name": "Scourge Javelin Torpedo",
+      "quantity_destroyed": 10456,
+      "quantity_dropped": 0,
+      "singleton": 0
+    },
+    {
+      "flag": 27,
+      "item_type_id": 24521,
+      "name": "Scourge Rage Torpedo",
+      "quantity_destroyed": 0,
+      "quantity_dropped": 30,
+      "singleton": 0
+    },
+    {
+      "flag": 24,
+      "item_type_id": 41236,
+      "name": "10000MN Afterburner I",
+      "quantity_destroyed": 1,
+      "quantity_dropped": 0,
+      "singleton": 0
+    },
+    {
+      "flag": 5,
+      "item_type_id": 36908,
+      "name": "Antipharmakon Thureo",
+      "quantity_destroyed": 1,
+      "quantity_dropped": 0,
+      "singleton": 0
+    },
+    {
+      "flag": 5,
+      "item_type_id": 24521,
+      "name": "Scourge Rage Torpedo",
+      "quantity_destroyed": 29448,
+      "quantity_dropped": 0,
+      "singleton": 0
+    },
+    {
+      "flag": 90,
+      "item_type_id": 33468,
+      "name": "Astero",
+      "quantity_destroyed": 0,
+      "quantity_dropped": 1,
+      "singleton": 0
+    }
+  ],
+  "killmail_id": 134903388,
+  "killmail_time": "2026-04-21T10:34:58Z",
+  "sequence_id": 97061333,
+  "solar_system_id": 31002060,
+  "solar_system_name": "J102623",
+  "uploaded_at": "2026-04-21T10:36:57Z",
+  "victim": {
+    "alliance_id": 0,
+    "character_id": 1965545308,
+    "corporation_id": 98437052,
+    "damage_taken": 2008279,
+    "ship_category": "Ship",
+    "ship_category_id": 6,
+    "ship_group": "Dreadnought",
+    "ship_group_id": 485,
+    "ship_name": "Phoenix Navy Issue",
+    "ship_type_id": 73793
+  },
+  "zkb": {
+    "awox": false,
+    "destroyed_value": 10246304714.4,
+    "dropped_value": 2401856735.31,
+    "fitted_value": 11393267187.76,
+    "labels": [
+      "tz:au",
+      "cat:6",
+      "#:5+",
+      "pvp",
+      "loc:w-space",
+      "isk:10b+",
+      "capital"
+    ],
+    "location_id": 40472226,
+    "npc": false,
+    "points": 63,
+    "solo": false,
+    "total_value": 12648161449.71
+  }
+}

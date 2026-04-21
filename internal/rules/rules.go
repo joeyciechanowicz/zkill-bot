@@ -1,12 +1,22 @@
+// Package rules is the rule engine. Rules are YAML-declarative and the `when`
+// clause is a boolean expression in expr-lang syntax, compiled once at load
+// time and evaluated per event. Matched rules yield their configured actions.
 package rules
 
 import (
+	"fmt"
+	"log/slog"
+	"maps"
 	"sort"
+	"time"
 
-	"zkill-bot/internal/killmail"
+	"github.com/expr-lang/expr"
+	"github.com/expr-lang/expr/vm"
+
+	"zkill-bot/internal/event"
 )
 
-// Mode controls how many rules are evaluated once a match is found.
+// Mode controls whether evaluation stops at the first match or continues.
 type Mode string
 
 const (
@@ -14,57 +24,133 @@ const (
 	ModeMultiMatch Mode = "multi-match"
 )
 
-// ActionConfig holds the action type and optional per-rule arguments.
+// ActionConfig holds the action type and optional per-rule arguments. The
+// args shape is action-specific and interpreted by the action package.
 type ActionConfig struct {
-	Type string                 `yaml:"type"`
-	Args map[string]interface{} `yaml:"args"`
+	Type string         `yaml:"type"`
+	Args map[string]any `yaml:"args"`
+	For  string         `yaml:"for"` // optional field path of an array; action runs once per item
 }
 
-// Rule is a single configured rule with its filter tree and actions.
+// Rule is a single configured rule.
 type Rule struct {
 	Name     string         `yaml:"name"`
 	Enabled  bool           `yaml:"enabled"`
 	Priority int            `yaml:"priority"`
-	Filter   FilterNode     `yaml:"filter"`
+	When     string         `yaml:"when"`
+	Continue bool           `yaml:"continue"` // in first-match mode, don't stop here
 	Actions  []ActionConfig `yaml:"actions"`
+
+	// program is the compiled `when` expression. Populated by Compile.
+	program *vm.Program
 }
 
-// RuleFile holds the evaluation mode and the list of rules.
-// It is unmarshalled directly by the config package as part of config.yaml.
-type RuleFile struct {
-	Mode  Mode   `yaml:"mode"`
-	Rules []Rule `yaml:"rules"`
+// Set is a compiled, priority-sorted collection of rules.
+type Set struct {
+	Mode  Mode
+	Rules []Rule
 }
 
-// RuleMatch is returned by Evaluate for each matched rule.
-type RuleMatch struct {
+// FactStore is the subset of internal/store.Store that rule expressions need.
+type FactStore interface {
+	GetAny(scope, key string) any
+	Exists(scope, key string) bool
+	RangeCount(scope, prefix string) int
+}
+
+// Compile validates + compiles every rule's `when` expression. Returns on the
+// first error so misconfigurations fail fast at startup.
+func Compile(mode Mode, raw []Rule) (*Set, error) {
+	if mode == "" {
+		mode = ModeFirstMatch
+	}
+	if mode != ModeFirstMatch && mode != ModeMultiMatch {
+		return nil, fmt.Errorf("rules: unknown mode %q", mode)
+	}
+
+	out := make([]Rule, len(raw))
+	for i, r := range raw {
+		if r.Name == "" {
+			return nil, fmt.Errorf("rules: rule at index %d has no name", i)
+		}
+		when := r.When
+		if when == "" {
+			when = "true"
+		}
+		prog, err := expr.Compile(when,
+			expr.AsBool(),
+			expr.AllowUndefinedVariables(),
+		)
+		if err != nil {
+			return nil, fmt.Errorf("rules: compile %q: %w", r.Name, err)
+		}
+		r.program = prog
+		out[i] = r
+	}
+	sort.SliceStable(out, func(i, j int) bool {
+		return out[i].Priority < out[j].Priority
+	})
+	return &Set{Mode: mode, Rules: out}, nil
+}
+
+// Match is a single rule match on a single event.
+type Match struct {
 	Rule    *Rule
 	Actions []ActionConfig
 }
 
-// Evaluate tests km against all enabled rules in priority order.
-// In first-match mode it returns as soon as one rule matches.
-// In multi-match mode it returns all matching rules.
-func Evaluate(km *killmail.Killmail, rf *RuleFile) []RuleMatch {
-	// Sort by priority each time so callers don't need to pre-sort.
-	sorted := make([]Rule, len(rf.Rules))
-	copy(sorted, rf.Rules)
-	sort.SliceStable(sorted, func(i, j int) bool {
-		return sorted[i].Priority < sorted[j].Priority
-	})
+// Evaluate runs all enabled rules against ev. In first-match mode a matched
+// rule stops evaluation unless its Continue flag is set.
+func (s *Set) Evaluate(ev *event.Event, facts FactStore) []Match {
+	if s == nil {
+		return nil
+	}
+	env := buildEnv(ev, facts)
 
-	var matches []RuleMatch
-	for i := range sorted {
-		r := &sorted[i]
+	var matches []Match
+	for i := range s.Rules {
+		r := &s.Rules[i]
 		if !r.Enabled {
 			continue
 		}
-		if matchFilter(km, &r.Filter) {
-			matches = append(matches, RuleMatch{Rule: r, Actions: r.Actions})
-			if rf.Mode == ModeFirstMatch {
-				return matches
-			}
+		v, err := expr.Run(r.program, env)
+		if err != nil {
+			slog.Warn("rules: eval error", "rule", r.Name, "error", err)
+			continue
+		}
+		hit, _ := v.(bool)
+		if !hit {
+			continue
+		}
+		matches = append(matches, Match{Rule: r, Actions: r.Actions})
+		if s.Mode == ModeFirstMatch && !r.Continue {
+			break
 		}
 	}
 	return matches
+}
+
+// buildEnv produces the per-event expr environment: event fields at the top
+// level, plus fact helpers and event metadata. Reserved identifiers:
+//   event_id, event_source, event_type, occurred_at,
+//   fact, fact_exists, fact_count, now
+func buildEnv(ev *event.Event, facts FactStore) map[string]any {
+	env := make(map[string]any, len(ev.Fields)+8)
+	maps.Copy(env, ev.Fields)
+	env["event_id"] = ev.ID
+	env["event_source"] = ev.Source
+	env["event_type"] = ev.Type
+	env["occurred_at"] = ev.OccurredAt
+	env["now"] = func() time.Time { return time.Now().UTC() }
+
+	if facts != nil {
+		env["fact"] = func(scope, key string) any { return facts.GetAny(scope, key) }
+		env["fact_exists"] = func(scope, key string) bool { return facts.Exists(scope, key) }
+		env["fact_count"] = func(scope, prefix string) int { return facts.RangeCount(scope, prefix) }
+	} else {
+		env["fact"] = func(string, string) any { return nil }
+		env["fact_exists"] = func(string, string) bool { return false }
+		env["fact_count"] = func(string, string) int { return 0 }
+	}
+	return env
 }

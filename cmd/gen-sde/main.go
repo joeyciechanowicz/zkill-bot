@@ -18,7 +18,7 @@ import (
 	_ "modernc.org/sqlite"
 )
 
-const outPath = "internal/enrichment/sde_gen.go"
+const outPath = "internal/enrich/sde/sde_gen.go"
 
 // Killmail-relevant EVE category IDs.
 // These are the only categories that appear in killmail fittings/ships.
@@ -125,10 +125,10 @@ var goTmpl = template.Must(template.New("").Funcs(template.FuncMap{
 // Source: EVE SDE (categories: ship, module, charge, drone, implant, subsystem, structure, fighter)
 // Generated: {{ .Date }}
 
-package enrichment
+package sde
 
-// sdeType holds enrichment data for a single EVE type ID.
-type sdeType struct {
+// Type holds enrichment data for a single EVE type ID.
+type Type struct {
 	TypeName    string
 	GroupID     int64
 	GroupName   string
@@ -139,8 +139,8 @@ type sdeType struct {
 	MetaGroup   string
 }
 
-// sdeTypes maps EVE type IDs to their enrichment data.
-var sdeTypes = map[int64]sdeType{
+// Types maps EVE type IDs to their enrichment data.
+var Types = map[int64]Type{
 {{- range .Rows}}
 {{ fmtRow . }}
 {{- end}}

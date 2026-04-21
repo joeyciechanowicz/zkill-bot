@@ -1,115 +1,157 @@
-# ZKill Bot System Specification
+# zkill-bot — Generic Event Pipeline Specification
 
 ## 1. Purpose
 
-ZKill Bot is an automated EVE Online monitoring system with one job:
+zkill-bot is a generic, always-on event-processing engine. It does one thing:
 
-1. Continuously ingest new killmail events from the zKillboard R2Z2 stream and run configurable rule-based actions.
+1. Run a set of pipelines, each of the shape
+   `Source → Enrichers → Rules → Actions`,
+   continuously, with operational visibility and safe recovery across
+   restarts.
 
-It is designed for always-on operation and operational visibility.
+The zKillboard killmail feed is one concrete `Source` implementation; other
+sources (ESI, a wormhole-connections API, Discord slash commands) plug in the
+same way.
 
-## 2. Product Outcomes
+## 2. Core types
 
-The system is expected to:
+All four stages operate on one value type:
 
-- Detect and process new killmail events in near real time.
-- Enrich killmail data so rules can be based on higher-level game context.
-- Evaluate flexible, prioritized rules and trigger one or more actions per match.
-- Prevent duplicate action execution for the same event/action combination.
+```go
+type Event struct {
+    ID         string         // "<source>:<natural-id>", used for idempotency
+    Source     string         // "zkill" | "whapi" | "esi" | "discord" | ...
+    Type       string         // source-defined, e.g. "killmail"
+    OccurredAt time.Time
+    Fields     map[string]any // dotted-path addressable; nested maps/slices
+}
+```
 
-## 3. High-Level Functional Scope
+The interfaces are deliberately small:
 
-The zkill stream is described in r2z2-docs.md.
+```go
+type Source   interface { Name() string; Run(ctx, out chan<- *Event) error }
+type Enricher interface { Enrich(ctx, *Event) error }
+type Handler  interface { Execute(ctx, *Event, args map[string]any) error }
+```
 
-### 3.1 Killmail Event Pipeline
+## 3. Pipelines
 
-The killmail polling system:
+Each pipeline is a dedicated goroutine pair — one for the source, one for the
+processing loop — with a buffered channel between them. A pipeline bundles:
 
-- Starts from either a stored checkpoint or a live sequence source.
-- Polls the event feed continuously.
-- Handles normal flow (new killmail), throttling, and transient errors.
-- Normalizes incoming payloads into a consistent internal event shape.
-- Rejects malformed payloads and moves forward without blocking the pipeline.
-- Enriches event data with ship/item names, meta levels, and related type metadata.
-- Evaluates configured rules in deterministic order.
-- Executes configured actions for matched rules.
-- Records processing progress and operational counters.
+- exactly one `Source`,
+- an ordered `Enricher` chain,
+- a compiled `Set` of rules,
+- an `action.Dispatcher` wired to the shared handler registry.
 
-### 3.2 Rule System
+Pipelines are isolated: an event from the `zkill` source never reaches the
+`discord` rule set. This keeps rule expressions schema-scoped.
 
-Rules are externally configurable and support:
+## 4. Rules
 
-- Enable/disable per rule.
-- Priority ordering.
-- Two evaluation modes:
-  - First-match mode (stop after first matched rule).
-  - Multi-match mode (continue evaluating remaining rules).
-- Composable filter logic (`and` / `or` / `not`) and domain-specific leaf filters.
+Rules are declared in YAML and compiled once at startup. A rule is:
 
-Supported filter families include:
+```yaml
+- name: <unique>
+  enabled: true
+  priority: 10              # lower runs first
+  continue: false           # in first-match mode, don't stop here
+  when: <expr-lang boolean expression>
+  actions:
+    - type: <handler name>
+      for:  <dotted path to a []any>   # optional; action runs per item
+      args: { ... }                    # templated per iteration
+```
 
-- Attacker volume and solo-kill logic.
-- Region/system/day/time-window filters.
-- Character/corp/alliance filters (victim-side and attacker-side variants).
-- Ship and item-type matching.
-- Capital involvement detection.
-- zKillboard value thresholds.
+Two evaluation modes:
 
-Rules should be written in a human readable format.
+- **first-match** — the first matching rule wins; `continue: true` lets
+  bookkeeping rules (e.g. fact writers) run before later matching rules.
+- **multi-match** — every matching rule runs.
 
-## 4. Action Features
+`when` expressions see all `Event.Fields` at the top level (`zkb.total_value`,
+`victim.character_id`, …) plus these builtins:
 
-Actions are rule-driven outputs. Current built-in actions are:
+| Name                         | Purpose                                         |
+|------------------------------|-------------------------------------------------|
+| `fact(scope, key)`           | Load a JSON fact, or `nil` if missing/expired.  |
+| `fact_exists(scope, key)`    | Bool.                                           |
+| `fact_count(scope, prefix)`  | Number of non-expired keys with given prefix.   |
+| `now()`                      | `time.Now().UTC()`.                             |
+| `event_id`, `event_source`, `event_type`, `occurred_at` | Event metadata. |
 
-- Console output action for human-readable event inspection.
-- Webhook action for outbound integrations (including Discord-friendly summaries).
+Reserved names (above) cannot be used as event field names.
 
-Action behavior requirements:
+## 5. Actions
 
-- Action arguments can be provided per rule (where supported).
-- Each action execution is idempotency-protected.
-- Failed retryable actions are retried automatically up to configured limits.
+Built-in handlers:
 
-## 5. Reliability and Idempotency
+| Type      | Purpose                                                     |
+|-----------|-------------------------------------------------------------|
+| `console` | JSON line to stdout.                                        |
+| `webhook` | POSTs JSON to `args.url`. `args.body` overrides the default. |
+| `store`   | Writes a fact (`op: set | inc | merge | delete`).            |
+| `reply`   | Sends a `ReplyPayload` on `event.Fields["_reply"]`.         |
 
-The system provides operational safety features:
+Action `args` strings are rendered through Go `text/template`. The template
+context is `Event.Fields` at the top level plus:
 
-- Sequence progress and processed state are persisted.
-- Action history prevents duplicate execution for the same event/action fingerprint.
+- `.item` — the current for-each item (or nil)
+- `.event_id`, `.event_source`, `.event_type`, `.occurred_at`
 
-## 6. Observability and Operator Alerts
+Every action invocation is idempotency-gated by
+`sha256(rule|type|iter-index|args)` keyed against `Event.ID` in the
+`actions_history` table; duplicates are skipped across retries and restarts.
 
-The system emits structured human readable logs and runtime metrics when a DEBUG=true flag is used, including:
+Failed actions retry with exponential backoff up to `retry.max_retries`.
 
-- Fetch status distributions.
-- Processed/rejected killmail counters.
-- Rule match counts.
-- Action success/failure/retry/skip/unknown counters.
-- Processing latency and ingestion lag.
+## 6. Persistence (shared across pipelines)
 
-There is also startup/shutdown notifications to a Discord webhook
+One SQLite database, three tables:
 
-## 7. Configuration and Runtime Controls
+```
+facts(scope, key, value JSON, updated_at, expires_at)   -- PK (scope,key)
+checkpoints(source PK, value, updated_at)
+actions_history(event_id, action_fp, executed_at)       -- PK pair
+```
 
-The system is environment-configurable for:
+`expires_at = 0` means "never". A background janitor deletes expired facts
+and ages out action history at `store.action_history_ttl`.
 
-- Rule file location.
-- Discord webhooks for startup/shutdown notifications
+Each source owns its own checkpoint entry. The zkill source persists its
+last-processed sequence id; on start it resumes from `last+1` or fetches a
+live sequence from `sequence.json` if no checkpoint exists.
 
-Configuration is validated at startup. Invalid configuration fails fast with actionable errors.
+## 7. Observability
 
-## 8. Data Persistence Expectations
+- `slog` text handler; structured key/value logs.
+- `debug: true` in config upgrades to DEBUG level.
+- Action counters (success / failure / retry / skipped) live on the
+  `Dispatcher` and can be scraped by the host process.
 
-Persistent state includes:
+## 8. Configuration
 
-- Last processed sequence checkpoint.
+All runtime config lives in a single YAML file:
 
-Persistence is intended to preserve continuity across restarts and support safe recovery workflows.
+```yaml
+debug: false
+store:    { path, janitor_interval, action_history_ttl }
+retry:    { max_retries, base_backoff, max_backoff }
+pipelines:
+  - name: zkill
+    source:    { type: zkill, ... }
+    facts:     [ { scope, key_path, alias }, ... ]
+    rules:     { mode, rules: [ ... ] }
+```
 
-## 12. Acceptance Criteria (Feature-Level)
+Invalid config fails fast at startup with actionable errors.
 
-A deployment is considered functionally correct when:
+## 9. Acceptance criteria
 
-- It can run continuously without manual intervention.
-- New killmails are consumed, normalized, enriched, evaluated, and actioned.
-- Duplicate action execution is prevented across retries/restarts.
+A deployment is considered correct when:
+
+- At least one pipeline runs continuously without manual intervention.
+- Its source's checkpoint advances monotonically in `checkpoints`.
+- Duplicate action execution is prevented across retries and restarts.
+- Expired facts disappear within one janitor tick of their `expires_at`.
