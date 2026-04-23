@@ -8,10 +8,10 @@ import (
 	"log/slog"
 	"sync"
 
-	"zkill-bot/internal/action"
-	"zkill-bot/internal/event"
-	"zkill-bot/internal/rules"
-	"zkill-bot/internal/source"
+	"github.com/joeyciechanowicz/eve-bot/action"
+	"github.com/joeyciechanowicz/eve-bot/event"
+	"github.com/joeyciechanowicz/eve-bot/internal/rules"
+	"github.com/joeyciechanowicz/eve-bot/source"
 )
 
 // Pipeline runs every configured source concurrently and funnels their events

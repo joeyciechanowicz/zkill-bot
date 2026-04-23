@@ -7,7 +7,7 @@ import (
 	"context"
 	"fmt"
 
-	"zkill-bot/internal/event"
+	"github.com/joeyciechanowicz/eve-bot/event"
 )
 
 // Enricher mutates ev.Fields in place, adding enrichment data.

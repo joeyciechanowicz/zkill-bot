@@ -15,12 +15,44 @@ import (
 	"net/http"
 	"time"
 
-	"zkill-bot/internal/event"
+	"github.com/joeyciechanowicz/eve-bot/event"
+	"github.com/joeyciechanowicz/eve-bot/source"
 )
+
+func init() {
+	source.Register("evescout", func(name string, params map[string]any, deps source.Deps) (source.Source, error) {
+		return New(Config{
+			Name:         name,
+			BaseURL:      stringParam(params, "base_url", "https://api.eve-scout.com"),
+			Path:         stringParam(params, "path", "/v2/public/signatures"),
+			PollInterval: durationParam(params, "poll_interval", 60*time.Second),
+			UserAgent:    stringParam(params, "user_agent", ""),
+		}, deps.HTTPClient, deps.Checkpointer), nil
+	})
+}
 
 type Checkpointer interface {
 	GetCheckpoint(source string) (string, bool)
 	SetCheckpoint(source, value string) error
+}
+
+func stringParam(m map[string]any, k, def string) string {
+	if v, ok := m[k].(string); ok && v != "" {
+		return v
+	}
+	return def
+}
+
+func durationParam(m map[string]any, k string, def time.Duration) time.Duration {
+	switch v := m[k].(type) {
+	case string:
+		if d, err := time.ParseDuration(v); err == nil {
+			return d
+		}
+	case int:
+		return time.Duration(v) * time.Millisecond
+	}
+	return def
 }
 
 type Config struct {

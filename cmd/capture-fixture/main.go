@@ -18,8 +18,8 @@ import (
 	"github.com/expr-lang/expr"
 	"github.com/expr-lang/expr/vm"
 
-	"zkill-bot/internal/event"
-	"zkill-bot/internal/source/zkill"
+	"github.com/joeyciechanowicz/eve-bot/event"
+	"github.com/joeyciechanowicz/eve-bot/internal/source/zkill"
 )
 
 func main() {

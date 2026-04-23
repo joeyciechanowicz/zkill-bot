@@ -13,13 +13,46 @@ import (
 	"strconv"
 	"time"
 
-	"zkill-bot/internal/event"
+	"github.com/joeyciechanowicz/eve-bot/event"
+	"github.com/joeyciechanowicz/eve-bot/source"
 )
+
+func init() {
+	source.Register("zkill", func(name string, params map[string]any, deps source.Deps) (source.Source, error) {
+		return New(Config{
+			Name:         name,
+			BaseURL:      stringParam(params, "base_url", "https://r2z2.zkillboard.com"),
+			SequencePath: stringParam(params, "sequence_path", "/ephemeral/sequence.json"),
+			PollInterval: durationParam(params, "poll_interval", 100*time.Millisecond),
+			Backoff404:   durationParam(params, "backoff_404", 6*time.Second),
+			UserAgent:    stringParam(params, "user_agent", ""),
+		}, deps.HTTPClient, deps.Checkpointer), nil
+	})
+}
 
 // Checkpointer is the subset of store.Store that the zkill source needs.
 type Checkpointer interface {
 	GetCheckpoint(source string) (string, bool)
 	SetCheckpoint(source, value string) error
+}
+
+func stringParam(m map[string]any, k, def string) string {
+	if v, ok := m[k].(string); ok && v != "" {
+		return v
+	}
+	return def
+}
+
+func durationParam(m map[string]any, k string, def time.Duration) time.Duration {
+	switch v := m[k].(type) {
+	case string:
+		if d, err := time.ParseDuration(v); err == nil {
+			return d
+		}
+	case int:
+		return time.Duration(v) * time.Millisecond
+	}
+	return def
 }
 
 // Config drives the poller.

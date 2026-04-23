@@ -8,8 +8,18 @@ import (
 	"io"
 	"net/http"
 
-	"zkill-bot/internal/event"
+	"github.com/joeyciechanowicz/eve-bot/event"
 )
+
+func init() {
+	Register("webhook", func(d Deps) Handler {
+		c := d.HTTPClient
+		if c == nil {
+			c = http.DefaultClient
+		}
+		return Webhook{Client: c}
+	})
+}
 
 // Webhook POSTs a JSON body to args["url"]. If args["body"] is provided it is
 // sent verbatim (after templating); otherwise a default envelope with the

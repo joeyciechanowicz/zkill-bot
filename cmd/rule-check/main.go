@@ -23,8 +23,8 @@ import (
 	"github.com/expr-lang/expr/parser"
 	"gopkg.in/yaml.v3"
 
-	"zkill-bot/internal/event"
-	"zkill-bot/internal/rules"
+	"github.com/joeyciechanowicz/eve-bot/event"
+	"github.com/joeyciechanowicz/eve-bot/internal/rules"
 )
 
 type factFlags []string

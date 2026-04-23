@@ -5,8 +5,12 @@ import (
 	"fmt"
 	"time"
 
-	"zkill-bot/internal/event"
+	"github.com/joeyciechanowicz/eve-bot/event"
 )
+
+func init() {
+	Register("store", func(d Deps) Handler { return Store{W: d.FactWriter} })
+}
 
 // FactWriter is the subset of internal/store.Store that this action needs.
 type FactWriter interface {

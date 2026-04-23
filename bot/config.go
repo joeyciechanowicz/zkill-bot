@@ -1,4 +1,9 @@
-package main
+// Package bot is the embeddable entry point for an eve-bot instance. A binary
+// (this repo's cmd/eve-bot or an external private binary) composes a Config
+// and calls Run. Custom sources and actions are wired in by blank-importing
+// their packages so their init() functions register with
+// github.com/joeyciechanowicz/eve-bot/source and .../action.
+package bot
 
 import (
 	"fmt"
@@ -7,10 +12,10 @@ import (
 
 	"gopkg.in/yaml.v3"
 
-	"zkill-bot/internal/rules"
+	"github.com/joeyciechanowicz/eve-bot/internal/rules"
 )
 
-// Config is the full YAML document the binary loads at startup.
+// Config is the full YAML document the bot loads at startup.
 type Config struct {
 	Store struct {
 		Path             string        `yaml:"path"`

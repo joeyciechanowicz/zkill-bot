@@ -13,7 +13,7 @@ import (
 	"github.com/expr-lang/expr"
 	"github.com/expr-lang/expr/vm"
 
-	"zkill-bot/internal/event"
+	"github.com/joeyciechanowicz/eve-bot/event"
 )
 
 // Mode controls whether evaluation stops at the first match or continues.

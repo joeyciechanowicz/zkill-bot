@@ -1,8 +1,8 @@
 package zkill
 
 import (
-	"zkill-bot/internal/enrich/sde"
-	"zkill-bot/internal/event"
+	"github.com/joeyciechanowicz/eve-bot/internal/enrich/sde"
+	"github.com/joeyciechanowicz/eve-bot/event"
 )
 
 // enrich annotates a zkill event with SDE-derived fields: ship/item/system

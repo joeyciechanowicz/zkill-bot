@@ -3,8 +3,8 @@ package rules_test
 import (
 	"testing"
 
-	"zkill-bot/internal/event"
-	"zkill-bot/internal/rules"
+	"github.com/joeyciechanowicz/eve-bot/event"
+	"github.com/joeyciechanowicz/eve-bot/internal/rules"
 )
 
 type fakeFacts struct {

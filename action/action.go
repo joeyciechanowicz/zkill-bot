@@ -18,8 +18,8 @@ import (
 	"text/template"
 	"time"
 
-	"zkill-bot/internal/event"
-	"zkill-bot/internal/rules"
+	"github.com/joeyciechanowicz/eve-bot/event"
+	"github.com/joeyciechanowicz/eve-bot/internal/rules"
 )
 
 // Handler implements a single action type. args are already template-rendered

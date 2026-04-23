@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	"zkill-bot/internal/event"
+	"github.com/joeyciechanowicz/eve-bot/event"
 )
 
 // ReplyPayload is the message shape sent on the event's _reply channel. The
@@ -13,6 +13,10 @@ import (
 type ReplyPayload struct {
 	Content   string
 	Ephemeral bool
+}
+
+func init() {
+	Register("reply", func(Deps) Handler { return Reply{} })
 }
 
 // Reply sends a ReplyPayload on event.Fields["_reply"] (expected to be a

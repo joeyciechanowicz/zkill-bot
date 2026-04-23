@@ -6,8 +6,12 @@ import (
 	"fmt"
 	"os"
 
-	"zkill-bot/internal/event"
+	"github.com/joeyciechanowicz/eve-bot/event"
 )
+
+func init() {
+	Register("console", func(Deps) Handler { return Console{} })
+}
 
 // Console prints a compact JSON line for the event. Useful for local
 // inspection; args are ignored.

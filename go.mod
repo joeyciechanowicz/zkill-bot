@@ -1,4 +1,4 @@
-module zkill-bot
+module github.com/joeyciechanowicz/eve-bot
 
 go 1.25.0
 

@@ -5,7 +5,7 @@ package source
 import (
 	"context"
 
-	"zkill-bot/internal/event"
+	"github.com/joeyciechanowicz/eve-bot/event"
 )
 
 // Source produces Events onto out until ctx is cancelled. Sources own their

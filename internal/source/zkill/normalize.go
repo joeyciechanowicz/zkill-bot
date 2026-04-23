@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"time"
 
-	"zkill-bot/internal/event"
+	"github.com/joeyciechanowicz/eve-bot/event"
 )
 
 // normalize parses a raw R2Z2 payload into an event.Event. Errors are

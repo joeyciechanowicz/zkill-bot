@@ -1,9 +1,9 @@
-# zkill-bot configuration
+# eve-bot configuration
 
 debug: false
 
 store:
-  path: ./zkill-bot.db
+  path: ./eve-bot.db
   janitor_interval: 5m
   action_history_ttl: 168h   # 7d
 

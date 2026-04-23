@@ -10,9 +10,9 @@ import (
 	"testing"
 	"time"
 
-	"zkill-bot/internal/action"
-	"zkill-bot/internal/event"
-	"zkill-bot/internal/rules"
+	"github.com/joeyciechanowicz/eve-bot/action"
+	"github.com/joeyciechanowicz/eve-bot/event"
+	"github.com/joeyciechanowicz/eve-bot/internal/rules"
 )
 
 type fakeIdem struct {

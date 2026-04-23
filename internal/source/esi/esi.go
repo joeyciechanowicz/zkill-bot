@@ -6,7 +6,7 @@ import (
 	"context"
 	"fmt"
 
-	"zkill-bot/internal/event"
+	"github.com/joeyciechanowicz/eve-bot/event"
 )
 
 type Config struct {
