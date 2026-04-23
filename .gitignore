@@ -1,6 +1,5 @@
 .claude/
 state.json
-zkill-bot
 .env
 gen-systems
 eve.db
